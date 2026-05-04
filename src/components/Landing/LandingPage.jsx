@@ -450,17 +450,15 @@ export default function LandingPage() {
         @media(max-width:1024px) {
           .hero-grid { grid-template-columns: 1fr !important; text-align: center; }
           .hero-grid > div:first-child { display: flex; flex-direction: column; align-items: center; }
-          .c1 { left: 0px; }
-          .c2 { right: 0px; }
+          .showcase-content { padding: 24px !important; min-height: auto !important; }
+          .floating-card { position: relative !important; width: 100% !important; margin-bottom: 16px !important; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; animation: none !important; transform: none !important; }
+          .floating-elements { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 24px; }
         }
 
         @media(max-width:640px) {
           nav { padding: 0 20px !important; }
           section { padding-left: 20px !important; padding-right: 20px !important; }
           footer { flex-direction: column; align-items: flex-start; padding: 32px 20px !important; gap: 24px; }
-          .showcase-content { padding: 24px !important; min-height: auto !important; }
-          .floating-card { position: relative !important; width: 100% !important; margin-bottom: 16px; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; animation: none !important; transform: none !important; }
-          .floating-elements { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 24px; }
           .orbit-container { transform: scale(0.7); margin-top: -40px; margin-bottom: -40px; }
         }
         

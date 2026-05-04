@@ -269,7 +269,7 @@ export default function LandingPage() {
           </p>
 
           {/* Orbiting Animation Graphic */}
-          <div style={{ position: 'relative', width: '420px', height: '420px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="orbit-container" style={{ position: 'relative', width: '420px', height: '420px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             
             {/* Concentric Circles - 3 rings */}
             <div style={{ position: 'absolute', width: '420px', height: '420px', border: '1px solid rgba(14,165,233,0.35)', borderRadius: '50%', boxShadow: '0 0 0 0 transparent, inset 0 0 20px rgba(14,165,233,0.04)' }}></div>
@@ -449,15 +449,23 @@ export default function LandingPage() {
 
         @media(max-width:1024px) {
           .hero-grid { grid-template-columns: 1fr !important; text-align: center; }
-          .hero-grid > div:first-child { display: flex; flexDirection: column; alignItems: center; }
+          .hero-grid > div:first-child { display: flex; flex-direction: column; align-items: center; }
           .c1 { left: 0px; }
           .c2 { right: 0px; }
         }
 
         @media(max-width:640px) {
-          nav { padding: 0 24px !important; }
-          section { padding-left: 24px !important; padding-right: 24px !important; }
-          footer { flex-direction: column; align-items: flex-start; padding: 32px 24px !important; gap: 24px; }
+          nav { padding: 0 20px !important; }
+          section { padding-left: 20px !important; padding-right: 20px !important; }
+          footer { flex-direction: column; align-items: flex-start; padding: 32px 20px !important; gap: 24px; }
+          .showcase-content { padding: 24px !important; min-height: auto !important; }
+          .floating-card { position: relative !important; width: 100% !important; margin-bottom: 16px; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; animation: none !important; transform: none !important; }
+          .floating-elements { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 24px; }
+          .orbit-container { transform: scale(0.7); margin-top: -40px; margin-bottom: -40px; }
+        }
+        
+        @media(max-width: 400px) {
+          .orbit-container { transform: scale(0.6); margin-top: -60px; margin-bottom: -60px; }
         }
       `}</style>
     </div>

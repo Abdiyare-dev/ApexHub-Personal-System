@@ -1233,3 +1233,95 @@ input[type="time"] {
 .notify-today .notify-icon-wrap { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
 .notify-budget .notify-icon-wrap { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; }
 
+/* ============================================================
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .dashboard-grid, .stats-grid, .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide desktop toggle */
+  .sidebar-toggle {
+    display: none !important;
+  }
+  
+  /* Show hamburger in topnav */
+  .hamburger {
+    display: flex !important;
+  }
+  
+  /* Make main wrapper take full width */
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+  
+  /* Sidebar as Mobile Drawer */
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px !important;
+    z-index: 1000;
+  }
+  
+  /* Open Sidebar State */
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  /* Sidebar Overlay */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  .sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  /* TopNav Adjustments */
+  .topnav {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  
+  .search-bar {
+    max-width: 140px;
+  }
+  
+  .search-bar.focused {
+    max-width: 200px;
+  }
+  
+  .topnav-user-name {
+    display: none;
+  }
+  
+  /* Modals */
+  .modal-content {
+    width: 95% !important;
+    max-width: none !important;
+    padding: 24px !important;
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    display: none;
+  }
+}

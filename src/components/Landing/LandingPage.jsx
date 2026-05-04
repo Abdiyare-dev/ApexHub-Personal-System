@@ -451,7 +451,7 @@ export default function LandingPage() {
           .hero-grid { grid-template-columns: 1fr !important; text-align: center; }
           .hero-grid > div:first-child { display: flex; flex-direction: column; align-items: center; }
           .showcase-content { padding: 24px !important; min-height: auto !important; }
-          .floating-card { position: relative !important; width: 100% !important; margin-bottom: 16px !important; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; animation: none !important; transform: none !important; }
+          .floating-card { position: relative !important; width: 100% !important; margin-bottom: 16px !important; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; animation: none !important; transform: none !important; opacity: 1 !important; }
           .floating-elements { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 24px; }
         }
 

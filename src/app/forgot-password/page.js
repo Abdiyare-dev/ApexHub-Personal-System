@@ -15,9 +15,9 @@ export default function ForgotPassword() {
   const [userCaptcha, setUserCaptcha] = useState('');
 
   const generateCaptcha = () => {
-    const chars = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+    const chars = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
     let code = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setCaptchaCode(code);
@@ -138,48 +138,65 @@ export default function ForgotPassword() {
 
               <div className="input-group" style={{ marginTop: '20px' }}>
                 <label>Security Verification</label>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                   <div style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid var(--border-color)',
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    fontSize: '1.4rem',
-                    fontWeight: '400',
-                    letterSpacing: '3px',
-                    color: 'var(--accent)',
+                    background: '#f9fafb',
+                    border: '1.5px solid #d1d5db',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    fontSize: '1.9rem',
+                    fontWeight: '900',
+                    letterSpacing: '5px',
+                    color: '#1e293b',
                     userSelect: 'none',
-                    minWidth: '130px',
+                    minWidth: '120px',
                     textAlign: 'center',
-                    fontFamily: 'var(--font-dancing-script), cursive',
-                    fontStyle: 'italic',
-                    backgroundSize: 'cover',
-                    textDecoration: 'line-through',
-                    textDecorationColor: 'rgba(59, 130, 246, 0.2)',
-                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.2)'
+                    fontFamily: '"Times New Roman", serif',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)'
                   }}>
-                    {captchaCode}
+                    <div style={{ 
+                      position: 'relative', 
+                      zIndex: 2, 
+                      transform: 'rotate(-2deg) skew(2deg)',
+                      textShadow: '1px 1px 0px rgba(255,255,255,0.8)'
+                    }}>
+                      {captchaCode}
+                    </div>
+                    {/* Multi-layered Security Lines */}
+                    <div style={{ position: 'absolute', top: '15%', left: '-10%', width: '120%', height: '1.5px', background: '#334155', transform: 'rotate(8deg)', opacity: 0.3, zIndex: 1 }}></div>
+                    <div style={{ position: 'absolute', top: '65%', left: '-10%', width: '120%', height: '1.5px', background: '#334155', transform: 'rotate(-12deg)', opacity: 0.3, zIndex: 1 }}></div>
+                    <div style={{ position: 'absolute', top: '40%', left: '-20%', width: '140%', height: '1px', background: '#000', transform: 'rotate(3deg)', opacity: 0.2, zIndex: 1 }}></div>
+                    <div style={{ position: 'absolute', top: '30%', left: '10%', width: '1px', height: '150%', background: '#000', transform: 'rotate(45deg)', opacity: 0.15, zIndex: 1 }}></div>
+                    <div style={{ position: 'absolute', top: '30%', left: '80%', width: '1px', height: '150%', background: '#000', transform: 'rotate(-45deg)', opacity: 0.15, zIndex: 1 }}></div>
                   </div>
-                  <input 
-                    type="text" 
-                    value={userCaptcha}
-                    onChange={(e) => setUserCaptcha(e.target.value)}
-                    className="glowing-input custom-input"
-                    placeholder="Type the Captcha"
-                    style={{ paddingLeft: '16px', flex: 1 }}
-                    required
-                    disabled={loading || successMsg}
-                  />
-                  <button 
-                    type="button" 
-                    onClick={generateCaptcha} 
-                    className="ms-icon-btn" 
-                    style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-                    title="Refresh Code"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <button 
+                      type="button" 
+                      onClick={generateCaptcha} 
+                      className="ms-icon-btn" 
+                      style={{ color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                      <span style={{ textDecoration: 'underline' }}>Reload</span>
+                    </button>
+                  </div>
                 </div>
+                
+                <input 
+                  type="text" 
+                  value={userCaptcha}
+                  onChange={(e) => setUserCaptcha(e.target.value)}
+                  className="glowing-input custom-input"
+                  placeholder="Type the Captcha"
+                  style={{ paddingLeft: '16px', marginTop: '12px' }}
+                  required
+                  disabled={loading || successMsg}
+                />
               </div>
 
               <button 
@@ -202,9 +219,15 @@ export default function ForgotPassword() {
               </p>
             </div>
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Link href="/login" className="auth-switch-btn" style={{ textDecoration: 'none' }}>
-                &larr; Back to Log In
+            <div style={{ marginTop: '32px', textAlign: 'center' }}>
+              <Link href="/login" style={{ textDecoration: 'none' }}>
+                <div className="btn-3d-back">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  Back to Log In
+                </div>
               </Link>
             </div>
           </div>
@@ -465,6 +488,61 @@ export default function ForgotPassword() {
           .login-card {
             transform: none !important;
           }
+        }
+
+        .btn-3d-back {
+          display: inline-flex;
+          align-items: center;
+          padding: 12px 24px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          color: var(--text-secondary);
+          font-weight: 700;
+          font-size: 0.95rem;
+          transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+          cursor: pointer;
+          position: relative;
+          box-shadow: 
+            0 4px 10px rgba(0,0,0,0.2),
+            inset 0 1px 1px rgba(255,255,255,0.1);
+          overflow: hidden;
+        }
+
+        .btn-3d-back:hover {
+          color: white;
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.4);
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 
+            0 8px 20px rgba(0,0,0,0.4),
+            0 0 15px rgba(59, 130, 246, 0.2),
+            inset 0 1px 1px rgba(255,255,255,0.2);
+        }
+
+        .btn-3d-back:active {
+          transform: translateY(1px);
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn-3d-back::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.08),
+            transparent
+          );
+          transition: 0.5s;
+        }
+
+        .btn-3d-back:hover::before {
+          left: 100%;
         }
       `}</style>
     </div>

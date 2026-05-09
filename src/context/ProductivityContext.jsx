@@ -139,7 +139,12 @@ export function ProductivityProvider({ children }) {
       const updated = [newTask, ...tasks];
       setTasks(updated); saveLS(LS_KEYS.tasks, updated); return;
     }
-    const { error } = await supabase.from('tasks').insert({ ...t, user_id: getUserId(), created_at: new Date().toISOString() });
+    
+    const dbTask = { ...t, user_id: getUserId(), created_at: new Date().toISOString() };
+    if (dbTask.dueDate !== undefined) { dbTask.due_date = dbTask.dueDate; delete dbTask.dueDate; }
+    if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
+    
+    const { error } = await supabase.from('tasks').insert(dbTask);
     if (error) { console.error('Error adding task:', error); throw error; }
   };
 
@@ -158,7 +163,12 @@ export function ProductivityProvider({ children }) {
       const updated = tasks.map(t => t.id === id ? { ...t, ...updatedTask } : t);
       setTasks(updated); saveLS(LS_KEYS.tasks, updated); return;
     }
-    await supabase.from('tasks').update(updatedTask).eq('id', id);
+    
+    const dbTask = { ...updatedTask };
+    if (dbTask.dueDate !== undefined) { dbTask.due_date = dbTask.dueDate; delete dbTask.dueDate; }
+    if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
+    
+    await supabase.from('tasks').update(dbTask).eq('id', id);
   };
 
   const deleteTask = async (id) => {
@@ -178,7 +188,13 @@ export function ProductivityProvider({ children }) {
       const updated = [newGoal, ...goals];
       setGoals(updated); saveLS(LS_KEYS.goals, updated); return;
     }
-    const { error } = await supabase.from('goals').insert({ ...g, milestones: [], user_id: getUserId(), created_at: new Date().toISOString() });
+    
+    const dbGoal = { ...g, milestones: [], user_id: getUserId(), created_at: new Date().toISOString() };
+    if (dbGoal.targetDate !== undefined) { dbGoal.target_date = dbGoal.targetDate; delete dbGoal.targetDate; }
+    if (dbGoal.targetAmount !== undefined) { dbGoal.target_amount = dbGoal.targetAmount; delete dbGoal.targetAmount; }
+    if (dbGoal.currentAmount !== undefined) { dbGoal.current_amount = dbGoal.currentAmount; delete dbGoal.currentAmount; }
+    
+    const { error } = await supabase.from('goals').insert(dbGoal);
     if (error) { console.error('Error adding goal:', error); throw error; }
   };
 
@@ -241,7 +257,13 @@ export function ProductivityProvider({ children }) {
       const updated = [newProject, ...projects];
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
     }
-    const { error } = await supabase.from('projects').insert({ ...p, tasks: [], is_completed: false, user_id: getUserId(), created_at: new Date().toISOString() });
+    
+    const dbProject = { ...p, tasks: [], is_completed: false, user_id: getUserId(), created_at: new Date().toISOString() };
+    if (dbProject.projectType !== undefined) { dbProject.project_type = dbProject.projectType; delete dbProject.projectType; }
+    if (dbProject.startDate !== undefined) { dbProject.start_date = dbProject.startDate; delete dbProject.startDate; }
+    if (dbProject.dueDate !== undefined) { dbProject.due_date = dbProject.dueDate; delete dbProject.dueDate; }
+    
+    const { error } = await supabase.from('projects').insert(dbProject);
     if (error) { console.error('Error adding project:', error); throw error; }
   };
 

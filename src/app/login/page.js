@@ -228,8 +228,24 @@ export default function Login() {
                   />
                 </div>
                 {isLoginMode && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-                    <Link href="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', position: 'relative', zIndex: 50 }}>
+                    <Link 
+                      href="/forgot-password" 
+                      style={{ 
+                        fontSize: '0.88rem', 
+                        color: 'var(--accent)', 
+                        textDecoration: 'none', 
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        transition: 'all 0.2s ease',
+                        background: 'rgba(59, 130, 246, 0.05)',
+                        border: '1px solid transparent'
+                      }}
+                      onMouseEnter={(e) => { e.target.style.background = 'rgba(59, 130, 246, 0.1)'; e.target.style.borderColor = 'rgba(59, 130, 246, 0.2)'; }}
+                      onMouseLeave={(e) => { e.target.style.background = 'rgba(59, 130, 246, 0.05)'; e.target.style.borderColor = 'transparent'; }}
+                    >
                       Forgot Password?
                     </Link>
                   </div>

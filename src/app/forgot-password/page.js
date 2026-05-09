@@ -35,6 +35,13 @@ export default function ForgotPassword() {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -146,6 +153,15 @@ export default function ForgotPassword() {
                     required
                     disabled={loading || successMsg}
                   />
+                  <button 
+                    type="button" 
+                    onClick={generateCaptcha} 
+                    className="ms-icon-btn" 
+                    style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                    title="Refresh Code"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                  </button>
                 </div>
               </div>
 

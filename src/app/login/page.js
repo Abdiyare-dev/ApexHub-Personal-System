@@ -211,14 +211,7 @@ export default function Login() {
               </div>
 
               <div className="input-group" style={{ marginTop: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ marginBottom: 0 }}>Password</label>
-                  {isLoginMode && (
-                    <Link href="/forgot-password" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>
-                      Forgot Password?
-                    </Link>
-                  )}
-                </div>
+                <label>Password</label>
                 <div className="input-wrapper">
                   <svg className="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -234,6 +227,13 @@ export default function Login() {
                     disabled={loading}
                   />
                 </div>
+                {isLoginMode && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                    <Link href="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>
+                      Forgot Password?
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <button 

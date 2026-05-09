@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -11,10 +11,30 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [captchaNum1, setCaptchaNum1] = useState(0);
+  const [captchaNum2, setCaptchaNum2] = useState(0);
+  const [userCaptcha, setUserCaptcha] = useState('');
+
+  const generateCaptcha = () => {
+    setCaptchaNum1(Math.floor(Math.random() * 10) + 1);
+    setCaptchaNum2(Math.floor(Math.random() * 10) + 1);
+    setUserCaptcha('');
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    if (parseInt(userCaptcha) !== (captchaNum1 + captchaNum2)) {
+      setErrorMsg('Incorrect security code. Please try again.');
+      generateCaptcha();
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -92,6 +112,37 @@ export default function ForgotPassword() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="glowing-input custom-input"
                     placeholder="name@example.com"
+                    required
+                    disabled={loading || successMsg}
+                  />
+                </div>
+              </div>
+
+              <div className="input-group" style={{ marginTop: '20px' }}>
+                <label>Security Verification</label>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px dashed var(--border-color)',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    fontSize: '1.1rem',
+                    fontWeight: '800',
+                    letterSpacing: '1px',
+                    color: 'var(--accent)',
+                    userSelect: 'none',
+                    minWidth: '100px',
+                    textAlign: 'center'
+                  }}>
+                    {captchaNum1} + {captchaNum2} = ?
+                  </div>
+                  <input 
+                    type="number" 
+                    value={userCaptcha}
+                    onChange={(e) => setUserCaptcha(e.target.value)}
+                    className="glowing-input custom-input"
+                    placeholder="Enter answer"
+                    style={{ paddingLeft: '16px', flex: 1 }}
                     required
                     disabled={loading || successMsg}
                   />

@@ -210,17 +210,26 @@ export default function ForgotPassword() {
               </button>
             </form>
 
-            <div style={{ marginTop: '32px', padding: '16px', borderRadius: '16px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.02)' }}>
+            <div style={{ 
+              marginTop: '40px', 
+              padding: '16px', 
+              borderRadius: '16px', 
+              background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(59, 130, 246, 0.05)', 
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(59, 130, 246, 0.1)', 
+              boxShadow: isDark ? 'inset 0 2px 10px rgba(255,255,255,0.02)' : 'none',
+              position: 'relative',
+              zIndex: 1
+            }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--text-primary)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 <span style={{ fontSize: '0.85rem', fontWeight: '800', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Security Verification</span>
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+              <p style={{ fontSize: '0.8rem', color: isDark ? 'var(--text-secondary)' : '#475569', lineHeight: '1.6', margin: 0 }}>
                 To protect your workspace, recovery links are exclusively dispatched to verified accounts. Ensure your email matches your registration.
               </p>
             </div>
 
-            <div style={{ marginTop: '32px', textAlign: 'center' }}>
+            <div style={{ marginTop: '48px', textAlign: 'center', position: 'relative', zIndex: 5 }}>
               <Link href="/login" style={{ textDecoration: 'none' }}>
                 <div className={isDark ? "btn-3d-back dark" : "btn-3d-back"}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
@@ -518,13 +527,12 @@ export default function ForgotPassword() {
 
         .btn-3d-back:hover {
           color: white;
-          background: rgba(59, 130, 246, 0.15);
-          border-color: rgba(59, 130, 246, 0.4);
-          transform: translateY(-3px) scale(1.02);
+          background: #2563eb;
+          border-color: #1d4ed8;
+          transform: translateY(-2px);
           box-shadow: 
-            0 8px 20px rgba(0,0,0,0.4),
-            0 0 15px rgba(59, 130, 246, 0.2),
-            inset 0 1px 1px rgba(255,255,255,0.2);
+            0 8px 25px rgba(59, 130, 246, 0.3),
+            inset 0 1px 1px rgba(255,255,255,0.4);
         }
 
         .btn-3d-back.dark:hover {

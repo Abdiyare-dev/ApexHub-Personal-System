@@ -492,18 +492,18 @@ export default function ForgotPassword() {
           display: inline-flex;
           align-items: center;
           padding: 12px 24px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(59, 130, 246, 0.08);
+          border: 1px solid rgba(59, 130, 246, 0.2);
           border-radius: 14px;
-          color: var(--text-secondary);
+          color: #2563eb;
           font-weight: 700;
           font-size: 0.95rem;
           transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
           cursor: pointer;
           position: relative;
           box-shadow: 
-            0 4px 10px rgba(0,0,0,0.2),
-            inset 0 1px 1px rgba(255,255,255,0.1);
+            0 4px 10px rgba(59, 130, 246, 0.1),
+            inset 0 1px 1px rgba(255,255,255,0.8);
           overflow: hidden;
         }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/context/ThemeContext';
 
 // Hook: fade-in when element enters viewport
 function useInView(options = {}) {
@@ -66,20 +67,7 @@ export default function LandingPage() {
   const [featRef, featInView] = useInView();
   const [ctaRef, ctaInView] = useInView();
 
-  const [theme, setTheme] = useState('dark');
-  
-  useEffect(() => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    setTheme(currentTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
-  
+  const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
 
   // Random Data States for Showcase Cards

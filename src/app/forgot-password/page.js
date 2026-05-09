@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from '@/context/ThemeContext';
 import Link from 'next/link';
 
 export default function ForgotPassword() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -140,8 +143,8 @@ export default function ForgotPassword() {
                 <label>Security Verification</label>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                   <div style={{
-                    background: '#f9fafb',
-                    border: '1.5px solid #d1d5db',
+                    background: isDark ? 'rgba(255,255,255,0.95)' : '#f9fafb',
+                    border: isDark ? '1.5px solid rgba(255,255,255,0.1)' : '1.5px solid #d1d5db',
                     padding: '10px 14px',
                     borderRadius: '8px',
                     fontSize: '1.9rem',
@@ -157,7 +160,7 @@ export default function ForgotPassword() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)'
+                    boxShadow: isDark ? '0 0 15px rgba(255,255,255,0.1)' : 'inset 0 1px 3px rgba(0,0,0,0.05)'
                   }}>
                     <div style={{ 
                       position: 'relative', 
@@ -171,15 +174,13 @@ export default function ForgotPassword() {
                     <div style={{ position: 'absolute', top: '15%', left: '-10%', width: '120%', height: '1.5px', background: '#334155', transform: 'rotate(8deg)', opacity: 0.3, zIndex: 1 }}></div>
                     <div style={{ position: 'absolute', top: '65%', left: '-10%', width: '120%', height: '1.5px', background: '#334155', transform: 'rotate(-12deg)', opacity: 0.3, zIndex: 1 }}></div>
                     <div style={{ position: 'absolute', top: '40%', left: '-20%', width: '140%', height: '1px', background: '#000', transform: 'rotate(3deg)', opacity: 0.2, zIndex: 1 }}></div>
-                    <div style={{ position: 'absolute', top: '30%', left: '10%', width: '1px', height: '150%', background: '#000', transform: 'rotate(45deg)', opacity: 0.15, zIndex: 1 }}></div>
-                    <div style={{ position: 'absolute', top: '30%', left: '80%', width: '1px', height: '150%', background: '#000', transform: 'rotate(-45deg)', opacity: 0.15, zIndex: 1 }}></div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <button 
                       type="button" 
                       onClick={generateCaptcha} 
                       className="ms-icon-btn" 
-                      style={{ color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      style={{ color: isDark ? '#60a5fa' : '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
                       <span style={{ textDecoration: 'underline' }}>Reload</span>
@@ -221,7 +222,7 @@ export default function ForgotPassword() {
 
             <div style={{ marginTop: '32px', textAlign: 'center' }}>
               <Link href="/login" style={{ textDecoration: 'none' }}>
-                <div className="btn-3d-back">
+                <div className={isDark ? "btn-3d-back dark" : "btn-3d-back"}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
@@ -241,10 +242,11 @@ export default function ForgotPassword() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-main);
+          background: var(--bg-body);
           position: relative;
           overflow: hidden;
           font-family: inherit;
+          transition: background 0.4s ease;
         }
 
         /* Ambient Orbs */
@@ -259,14 +261,14 @@ export default function ForgotPassword() {
         .orb-1 {
           width: 600px;
           height: 600px;
-          background: rgba(59, 130, 246, 0.4);
+          background: ${isDark ? 'rgba(30, 64, 175, 0.4)' : 'rgba(59, 130, 246, 0.3)'};
           top: -200px;
           left: -100px;
         }
         .orb-2 {
           width: 500px;
           height: 500px;
-          background: rgba(139, 92, 246, 0.3);
+          background: ${isDark ? 'rgba(88, 28, 135, 0.3)' : 'rgba(139, 92, 246, 0.2)'};
           bottom: -150px;
           right: -50px;
           animation-delay: -5s;
@@ -274,7 +276,7 @@ export default function ForgotPassword() {
         .orb-3 {
           width: 400px;
           height: 400px;
-          background: rgba(16, 185, 129, 0.2);
+          background: ${isDark ? 'rgba(15, 118, 110, 0.2)' : 'rgba(16, 185, 129, 0.2)'};
           top: 30%;
           left: 50%;
           animation-delay: -10s;
@@ -311,13 +313,9 @@ export default function ForgotPassword() {
           max-width: 440px;
           padding: 40px 40px;
           border-radius: 28px;
-          background: linear-gradient(145deg, var(--bg-topnav), rgba(255, 255, 255, 0.02));
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-top: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.2), 
-            0 8px 16px rgba(0, 160, 255, 0.1),
-            inset 0 1px 10px rgba(255, 255, 255, 0.05);
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          box-shadow: var(--shadow-card);
           backdrop-filter: blur(40px);
           -webkit-backdrop-filter: blur(40px);
           transform: perspective(1200px) rotateY(3deg) rotateX(1deg);
@@ -509,6 +507,15 @@ export default function ForgotPassword() {
           overflow: hidden;
         }
 
+        .btn-3d-back.dark {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.15);
+          color: #e2e8f0;
+          box-shadow: 
+            0 4px 15px rgba(0,0,0,0.5),
+            inset 0 1px 1px rgba(255,255,255,0.05);
+        }
+
         .btn-3d-back:hover {
           color: white;
           background: rgba(59, 130, 246, 0.15);
@@ -518,6 +525,15 @@ export default function ForgotPassword() {
             0 8px 20px rgba(0,0,0,0.4),
             0 0 15px rgba(59, 130, 246, 0.2),
             inset 0 1px 1px rgba(255,255,255,0.2);
+        }
+
+        .btn-3d-back.dark:hover {
+          background: rgba(96, 165, 250, 0.2);
+          border-color: rgba(96, 165, 250, 0.5);
+          box-shadow: 
+            0 10px 25px rgba(0,0,0,0.6),
+            0 0 20px rgba(96, 165, 250, 0.3),
+            inset 0 1px 1px rgba(255,255,255,0.1);
         }
 
         .btn-3d-back:active {

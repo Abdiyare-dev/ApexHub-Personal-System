@@ -11,13 +11,16 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [captchaNum1, setCaptchaNum1] = useState(0);
-  const [captchaNum2, setCaptchaNum2] = useState(0);
+  const [captchaCode, setCaptchaCode] = useState('');
   const [userCaptcha, setUserCaptcha] = useState('');
 
   const generateCaptcha = () => {
-    setCaptchaNum1(Math.floor(Math.random() * 10) + 1);
-    setCaptchaNum2(Math.floor(Math.random() * 10) + 1);
+    const chars = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaCode(code);
     setUserCaptcha('');
   };
 
@@ -29,8 +32,8 @@ export default function ForgotPassword() {
     e.preventDefault();
     if (loading) return;
 
-    if (parseInt(userCaptcha) !== (captchaNum1 + captchaNum2)) {
-      setErrorMsg('Incorrect security code. Please try again.');
+    if (userCaptcha.toLowerCase() !== captchaCode.toLowerCase()) {
+      setErrorMsg('Security code does not match. Please try again.');
       generateCaptcha();
       return;
     }
@@ -72,12 +75,20 @@ export default function ForgotPassword() {
       <div className="login-container">
         <div className="login-form-area">
           <div className="login-card glass-3d">
-            <div className="logo-header" style={{ flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-              <img src="/icon_logo.png" alt="ApexHub Logo" width="84" height="84" style={{ borderRadius: '20px', objectFit: 'cover', boxShadow: '0 8px 24px rgba(0, 160, 255, 0.45)' }} />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h1 className="hero-greeting" style={{ lineHeight: '1.05', fontSize: '2.2rem' }}>ApexHub</h1>
-                <span style={{ fontSize: '0.8rem', fontWeight: '800', opacity: 0.85, letterSpacing: '0.8px', textTransform: 'uppercase', marginTop: '4px', textAlign: 'center' }}>Password Recovery</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ 
+                width: '84px', 
+                height: '84px', 
+                borderRadius: '20px', 
+                overflow: 'hidden', 
+                boxShadow: '0 8px 24px rgba(0, 160, 255, 0.45)',
+                marginBottom: '16px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <img src="/icon_logo.png" alt="ApexHub Logo" width="84" height="84" style={{ objectFit: 'cover' }} />
               </div>
+              <h1 className="hero-greeting" style={{ lineHeight: '1.05', fontSize: '2.2rem', textAlign: 'center' }}>ApexHub</h1>
+              <span style={{ fontSize: '0.8rem', fontWeight: '800', opacity: 0.85, letterSpacing: '0.8px', textTransform: 'uppercase', marginTop: '4px', textAlign: 'center' }}>Password Recovery</span>
             </div>
             
             <p className="hero-subtitle" style={{ marginBottom: '32px', textAlign: 'center' }}>
@@ -129,26 +140,32 @@ export default function ForgotPassword() {
                 <label>Security Verification</label>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <div style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px dashed var(--border-color)',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--border-color)',
                     padding: '12px 16px',
                     borderRadius: '10px',
-                    fontSize: '1.1rem',
-                    fontWeight: '800',
-                    letterSpacing: '1px',
+                    fontSize: '1.4rem',
+                    fontWeight: '400',
+                    letterSpacing: '3px',
                     color: 'var(--accent)',
                     userSelect: 'none',
-                    minWidth: '100px',
-                    textAlign: 'center'
+                    minWidth: '130px',
+                    textAlign: 'center',
+                    fontFamily: 'var(--font-dancing-script), cursive',
+                    fontStyle: 'italic',
+                    backgroundSize: 'cover',
+                    textDecoration: 'line-through',
+                    textDecorationColor: 'rgba(59, 130, 246, 0.2)',
+                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.2)'
                   }}>
-                    {captchaNum1} + {captchaNum2} = ?
+                    {captchaCode}
                   </div>
                   <input 
-                    type="number" 
+                    type="text" 
                     value={userCaptcha}
                     onChange={(e) => setUserCaptcha(e.target.value)}
                     className="glowing-input custom-input"
-                    placeholder="Enter answer"
+                    placeholder="Type the Captcha"
                     style={{ paddingLeft: '16px', flex: 1 }}
                     required
                     disabled={loading || successMsg}
@@ -174,6 +191,16 @@ export default function ForgotPassword() {
                 {loading ? <span className="spinner"></span> : 'Send Reset Link'}
               </button>
             </form>
+
+            <div style={{ marginTop: '32px', padding: '16px', borderRadius: '16px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--text-primary)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Security Verification</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                To protect your workspace, recovery links are exclusively dispatched to verified accounts. Ensure your email matches your registration.
+              </p>
+            </div>
 
             <div style={{ marginTop: '24px', textAlign: 'center' }}>
               <Link href="/login" className="auth-switch-btn" style={{ textDecoration: 'none' }}>
@@ -258,20 +285,29 @@ export default function ForgotPassword() {
         
         .login-card {
           width: 100%;
-          max-width: 420px;
+          max-width: 440px;
           padding: 40px 40px;
-          border-radius: 24px;
-          background: var(--bg-topnav);
-          border: 1px solid var(--border-color);
-          box-shadow: var(--shadow-card-hover);
-          backdrop-filter: blur(28px);
-          -webkit-backdrop-filter: blur(28px);
-          transform: perspective(1000px) rotateY(2deg);
-          transition: transform 0.4s ease;
+          border-radius: 28px;
+          background: linear-gradient(145deg, var(--bg-topnav), rgba(255, 255, 255, 0.02));
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.2), 
+            0 8px 16px rgba(0, 160, 255, 0.1),
+            inset 0 1px 10px rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(40px);
+          -webkit-backdrop-filter: blur(40px);
+          transform: perspective(1200px) rotateY(3deg) rotateX(1deg);
+          transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
         .login-card:hover {
-          transform: perspective(1000px) rotateY(0deg) translateY(-5px);
+          transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateY(-8px);
+          box-shadow: 
+            0 30px 60px rgba(0, 0, 0, 0.3), 
+            0 12px 24px rgba(0, 160, 255, 0.15),
+            inset 0 1px 15px rgba(255, 255, 255, 0.08);
+          border-color: rgba(0, 160, 255, 0.3);
         }
 
         .hero-greeting {

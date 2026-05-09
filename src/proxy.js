@@ -5,11 +5,11 @@ export function proxy(request) {
   const pathname = request.nextUrl.pathname;
 
   const isLoginPage = pathname.startsWith('/login');
+  const isRecoveryPage = pathname.startsWith('/forgot-password') || pathname.startsWith('/update-password');
   const isHomePage = pathname === '/';
 
-  // Allow the home page through for everyone — page.js handles showing
-  // LandingPage (unauthenticated) vs Dashboard (authenticated)
-  if (isHomePage) {
+  // Allow the home page and recovery pages through for everyone
+  if (isHomePage || isRecoveryPage) {
     return NextResponse.next();
   }
 

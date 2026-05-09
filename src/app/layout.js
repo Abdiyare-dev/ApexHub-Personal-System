@@ -1,4 +1,4 @@
-import { Inter } from "next/font/google";
+import { Inter, Dancing_Script } from "next/font/google";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { NavigationProvider } from "@/context/NavigationContext";
 import { FinanceProvider } from "@/context/FinanceContext";
@@ -7,6 +7,10 @@ import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+const dancingScript = Dancing_Script({ 
+  subsets: ["latin"],
+  variable: '--font-dancing-script',
+});
 
 export const metadata = {
   title: "ApexHub - Personal Tracking System",
@@ -16,7 +20,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="dark" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${dancingScript.variable}`}>
         <AuthProvider>
           <ThemeProvider>
             <NavigationProvider>

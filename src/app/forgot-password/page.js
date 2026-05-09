@@ -20,7 +20,7 @@ export default function ForgotPassword() {
   const generateCaptcha = () => {
     const chars = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
     let code = '';
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setCaptchaCode(code);
@@ -174,6 +174,8 @@ export default function ForgotPassword() {
                     <div style={{ position: 'absolute', top: '15%', left: '-10%', width: '120%', height: '1.5px', background: '#334155', transform: 'rotate(8deg)', opacity: 0.3, zIndex: 1 }}></div>
                     <div style={{ position: 'absolute', top: '65%', left: '-10%', width: '120%', height: '1.5px', background: '#334155', transform: 'rotate(-12deg)', opacity: 0.3, zIndex: 1 }}></div>
                     <div style={{ position: 'absolute', top: '40%', left: '-20%', width: '140%', height: '1px', background: '#000', transform: 'rotate(3deg)', opacity: 0.2, zIndex: 1 }}></div>
+                    <div style={{ position: 'absolute', top: '25%', left: '0', width: '100%', height: '1px', background: '#000', transform: 'rotate(-5deg)', opacity: 0.1, zIndex: 1 }}></div>
+                    <div style={{ position: 'absolute', top: '75%', left: '0', width: '100%', height: '1px', background: '#000', transform: 'rotate(7deg)', opacity: 0.1, zIndex: 1 }}></div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <button 

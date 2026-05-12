@@ -88,7 +88,7 @@ export default function Projects() {
   };
 
   const getProjectStatus = (project) => {
-    if (project.is_completed) return 'Completed';
+    if (project.isCompleted) return 'Completed';
     const now = new Date();
     const start = new Date(project.startDate);
     if (now >= start) return 'In Progress';
@@ -123,7 +123,7 @@ export default function Projects() {
             projects.map(p => {
               const status = getProjectStatus(p);
               return (
-                <div key={p.id} className={`project-card ${p.is_completed ? 'completed-card' : ''}`}>
+                <div key={p.id} className={`project-card ${p.isCompleted ? 'completed-card' : ''}`}>
                   <div className="pc-header">
                     <div className="pc-header-left">
                       <span className={`status-badge ${status.replace(' ', '-').toLowerCase()}`}>{status}</span>
@@ -133,7 +133,7 @@ export default function Projects() {
                       <label className="project-complete-box">
                         <input 
                           type="checkbox" 
-                          checked={p.is_completed} 
+                          checked={p.isCompleted} 
                           onChange={() => toggleProjectComplete(p.id)} 
                           title="Mark project as complete"
                         />
@@ -142,7 +142,7 @@ export default function Projects() {
                     </div>
                   </div>
                   
-                  <h4 className="pc-title" style={{ textDecoration: p.is_completed ? 'line-through' : 'none' }}>{p.name}</h4>
+                  <h4 className="pc-title" style={{ textDecoration: p.isCompleted ? 'line-through' : 'none' }}>{p.name}</h4>
                   {p.description && <p className="pc-desc">{p.description}</p>}
                   
                   <div className="pc-dates">
@@ -181,7 +181,7 @@ export default function Projects() {
                       ))}
                     </div>
                     
-                    {!p.is_completed && (
+                    {!p.isCompleted && (
                       <form onSubmit={(e) => handleAddInternalTask(e, p.id)} className="pct-add-form">
                         <input 
                           type="text" 

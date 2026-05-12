@@ -126,7 +126,7 @@ export default function Sidebar() {
             </button>
             <div 
               className={`nav-accordion-panel ${openAccordion === 'productivity' ? 'open' : ''}`}
-              style={{ maxHeight: openAccordion === 'productivity' ? '250px' : null }}
+              style={{ maxHeight: openAccordion === 'productivity' ? '350px' : null }}
             >
               {['Dashboard', 'Tasks', 'Goals', 'Projects', 'Reports'].map((item) => (
                 <a 

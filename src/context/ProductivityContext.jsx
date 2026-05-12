@@ -19,16 +19,23 @@ const LS_KEYS = {
 // Supabase returns snake_case; frontend uses camelCase. Normalize on read.
 const normalizeTask = (t) => ({
   ...t,
-  dueDate: t.dueDate ?? t.deadline ?? null,
-  goalId: t.goalId ?? t.goal_id ?? null,
+  dueDate: t.due_date ?? t.dueDate ?? t.deadline ?? null,
+  goalId: t.goal_id ?? t.goalId ?? null,
+});
+
+const normalizeGoal = (g) => ({
+  ...g,
+  targetDate: g.target_date ?? g.targetDate ?? null,
+  targetAmount: g.target_amount ?? g.targetAmount ?? 0,
+  currentAmount: g.current_amount ?? g.currentAmount ?? 0,
+  milestones: g.milestones ?? [],
 });
 
 const normalizeProject = (p) => ({
   ...p,
-  projectType: p.projectType ?? p.type ?? null,
-  startDate: p.startDate ?? p.start_date ?? null,
-  dueDate: p.dueDate ?? p.due_date ?? null,
-  is_completed: p.is_completed ?? p.isCompleted ?? false,
+  projectType: p.project_type ?? p.projectType ?? p.type ?? null,
+  startDate: p.start_date ?? p.startDate ?? null,
+  dueDate: p.due_date ?? p.dueDate ?? null,
   isCompleted: p.is_completed ?? p.isCompleted ?? false,
 });
 
@@ -69,7 +76,7 @@ export function ProductivityProvider({ children }) {
       supabase.from('productivity_meta').select('*').eq('user_id', userId).single(),
     ]);
     if (tData) setTasks(tData.map(normalizeTask));
-    if (gData) setGoals(gData);
+    if (gData) setGoals(gData.map(normalizeGoal));
     if (pData) setProjects(pData.map(normalizeProject));
     if (mData?.project_types) setProjectTypes(mData.project_types);
   };
@@ -111,7 +118,7 @@ export function ProductivityProvider({ children }) {
       .subscribe();
 
     const goalsChannel = supabase.channel(`goals-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals', filter: `user_id=eq.${userId}` }, makeRefetchHandler(setGoals, 'goals', null))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals', filter: `user_id=eq.${userId}` }, makeRefetchHandler(setGoals, 'goals', normalizeGoal))
       .subscribe();
 
     const projectsChannel = supabase.channel(`projects-${userId}`)

@@ -20,12 +20,18 @@ export default function ProductivityReports() {
   const fmtDate = (ds) => ds ? new Date(ds).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
 
   const filteredTasks = tasks.filter(t => {
-    const d = new Date(t.dueDate).toISOString().split('T')[0];
-    return d >= fromDate && d <= toDate;
+    if (!t.dueDate) return false;
+    try {
+      const d = new Date(t.dueDate).toISOString().split('T')[0];
+      return d >= fromDate && d <= toDate;
+    } catch (e) { return false; }
   });
   const filteredProjects = projects.filter(p => {
-    const d = new Date(p.startDate).toISOString().split('T')[0];
-    return d >= fromDate && d <= toDate;
+    if (!p.startDate) return false;
+    try {
+      const d = new Date(p.startDate).toISOString().split('T')[0];
+      return d >= fromDate && d <= toDate;
+    } catch (e) { return false; }
   });
   const allGoals = goals;
 

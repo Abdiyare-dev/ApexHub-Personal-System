@@ -57,7 +57,7 @@ export default function TimetableCard({ onNavigate }) {
         <div className="widget-title-group" onClick={handleHeaderClick}>
           <div className="widget-icon">📅</div>
           <div>
-            <h4 className="widget-heading">Today's Schedule</h4>
+            <h4 className="widget-heading">Today&apos;s Schedule</h4>
             <span className="widget-subtitle">{entries.length} Activities Today</span>
           </div>
         </div>

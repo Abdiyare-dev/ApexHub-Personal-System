@@ -108,7 +108,7 @@ export default function ForgotPassword() {
                 </svg>
               </div>
               <p className="hero-subtitle" style={{ margin: 0, fontSize: '0.88rem', lineHeight: '1.4', color: 'var(--text-secondary)', textAlign: 'left' }}>
-                Enter your email address and we'll send you a link to reset your password.
+                Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
             </div>
 

@@ -797,7 +797,7 @@ export default function TimetablePage() {
               <button className="modal-close" onClick={() => setIsConvertToTasksOpen(false)}>✕</button>
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '14px 0 20px' }}>
-              This will automatically convert all timetable activities into weekly recurring tasks in your Tasks module. Already converted entries won't be duplicated.
+              This will automatically convert all timetable activities into weekly recurring tasks in your Tasks module. Already converted entries won&apos;t be duplicated.
             </p>
             <div className="modal-actions">
               <button type="button" className="btn-cancel" onClick={() => setIsConvertToTasksOpen(false)}>Cancel</button>

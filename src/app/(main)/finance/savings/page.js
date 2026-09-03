@@ -435,7 +435,7 @@ export default function SavingsPage() {
         <div className="custom-modal-overlay" onClick={() => setContributeGoal(null)}>
           <div className="custom-modal-box glass-3d" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">Add to "{contributeGoal.title}"</h3>
+              <h3 className="modal-title">Add to &quot;{contributeGoal.title}&quot;</h3>
               <button className="modal-close" onClick={() => setContributeGoal(null)}>✕</button>
             </div>
 

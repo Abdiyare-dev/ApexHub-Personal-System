@@ -2,8 +2,15 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
 export async function middleware(request) {
+  // Forward the current pathname via a request header so Server Components
+  // (which have no direct access to the active route) can read it with
+  // headers(). Used by (main)/layout.js to decide whether '/' should render
+  // the public landing page or the authenticated app shell.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', request.nextUrl.pathname);
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: { headers: requestHeaders },
   });
 
   const supabase = createServerClient(
@@ -19,7 +26,7 @@ export async function middleware(request) {
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
-            request,
+            request: { headers: requestHeaders },
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -36,8 +43,11 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Define public routes that don't require authentication
+  // Define public routes that don't require authentication.
+  // '/' is public too: signed-out visitors see the marketing landing page
+  // there (handled by (main)/layout.js), signed-in visitors see the app.
   const publicPaths = [
+    '/',
     '/login',
     '/signup',
     '/forgot-password',

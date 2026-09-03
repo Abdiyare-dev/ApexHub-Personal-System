@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import Cookies from 'js-cookie';
+import { createClient } from '@/lib/supabase/client';
 
 const AuthContext = createContext({});
 
@@ -13,23 +12,16 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = createClient();
+
     // Check active sessions and sets the user
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session && Cookies.get('supabaseToken') === 'mock-token') {
-        const mockEmail = localStorage.getItem('mock-email') || 'test@example.com';
-        setUser({ id: 'mock-local-user-123', email: mockEmail, user_metadata: { full_name: 'Test User' } });
-        setLoading(false);
-        return;
-      }
 
       if (session) {
         setUser(session.user);
-        Cookies.set('supabaseToken', session.access_token, { expires: 14, secure: process.env.NODE_ENV === 'production' });
       } else {
         setUser(null);
-        Cookies.remove('supabaseToken');
       }
       setLoading(false);
     };
@@ -41,16 +33,8 @@ export const AuthProvider = ({ children }) => {
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
           setUser(null);
-          Cookies.remove('supabaseToken');
-          localStorage.removeItem('mock-email');
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          if (session) {
-            setUser(session.user);
-            Cookies.set('supabaseToken', session.access_token, { expires: 14, secure: process.env.NODE_ENV === 'production' });
-          }
         } else if (session) {
           setUser(session.user);
-          Cookies.set('supabaseToken', session.access_token, { expires: 14, secure: process.env.NODE_ENV === 'production' });
         }
         setLoading(false);
       }
@@ -62,14 +46,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loginWithEmail = async (email, password) => {
-    if (email.toLowerCase().includes('test')) {
-      const mockUser = { id: 'mock-local-user-123', email, user_metadata: { full_name: 'Test User' } };
-      setUser(mockUser);
-      localStorage.setItem('mock-email', email);
-      Cookies.set('supabaseToken', 'mock-token', { expires: 14 });
-      setLoading(false);
-      return { user: mockUser };
-    }
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -79,14 +56,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUpWithEmail = async (email, password, fullName = '') => {
-    if (email.toLowerCase().includes('test')) {
-      const mockUser = { id: 'mock-local-user-123', email, user_metadata: { full_name: fullName || 'Test User' } };
-      setUser(mockUser);
-      localStorage.setItem('mock-email', email);
-      Cookies.set('supabaseToken', 'mock-token', { expires: 14 });
-      setLoading(false);
-      return { user: mockUser };
-    }
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -101,6 +71,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
@@ -109,10 +80,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    localStorage.removeItem('mock-email');
+    const supabase = createClient();
     await supabase.auth.signOut();
-    Cookies.remove('supabaseToken');
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   return (

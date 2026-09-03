@@ -128,8 +128,11 @@ export default function TopNav() {
       .filter(t => t.type === 'expense' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const planned = budgets.monthly.planned;
-    if (monthlyExpenses > planned * 0.9) {
+    const planned = Array.isArray(budgets) 
+      ? budgets.reduce((sum, b) => sum + Number(b.amount || 0), 0) 
+      : 0;
+
+    if (planned > 0 && monthlyExpenses > planned * 0.9) {
       list.push({
         id: 'budget-alert',
         type: 'budget',

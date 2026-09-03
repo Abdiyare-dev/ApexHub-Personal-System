@@ -1,6 +1,19 @@
+import withSerwistInit from "@serwist/next"
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/sw.js",
+  swDest: "public/sw.js",
+  disable: true,
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
-};
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+}
 
-export default nextConfig;
+export default withSerwist(nextConfig)

@@ -7,12 +7,15 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
   AreaChart, Area, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import TodayHabitsWidget from '@/components/habits/TodayHabitsWidget';
+import TimetableCard from '@/components/timetable/TimetableCard';
+import FinanceSummaryCard from '@/components/Finance/FinanceSummaryCard';
 
 const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
 const COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e'];
 
-export default function SummaryAnalytics() {
+export default function SummaryAnalytics({ onNavigate }) {
   const { transactions } = useFinance();
   const { tasks, goals, projects } = useProductivity();
 
@@ -117,6 +120,15 @@ export default function SummaryAnalytics() {
           <div className="kpi-trend text-muted">In Progress</div>
         </div>
       </div>
+
+      {/* TODAY'S HABITS & SCHEDULE SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <TodayHabitsWidget onNavigate={onNavigate} />
+        <TimetableCard onNavigate={onNavigate} />
+      </div>
+
+      {/* MONTHLY FINANCE & BUDGET STATUS CARD */}
+      <FinanceSummaryCard onNavigate={onNavigate} />
 
       {/* SPLIT ANALYTICS MODULES */}
       <div className="analytics-split">

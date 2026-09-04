@@ -1,0 +1,35 @@
+# Keeps the Supabase free-tier project from pausing.
+#
+# Free projects pause after roughly a week without API activity. Pausing does
+# not delete data — you can restore from the dashboard — but it means the app
+# is down until you notice. This job makes one tiny read every few days so the
+# project never goes idle long enough to pause.
+#
+# Setup (one time): add two repository secrets under
+# Settings -> Secrets and variables -> Actions:
+#   SUPABASE_URL       your https://<project>.supabase.co URL
+#   SUPABASE_ANON_KEY  the anon/publishable key (safe to use here — it is
+#                      already shipped to browsers and is protected by RLS)
+
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *' # every 3 days at 06:00 UTC
+  workflow_dispatch: # lets you run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the REST endpoint
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/categories?select=id&limit=1")
+          echo "Supabase responded: $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::Unexpected status $code — the project may be paused or the secrets may be wrong."
+            exit 1
+          fi

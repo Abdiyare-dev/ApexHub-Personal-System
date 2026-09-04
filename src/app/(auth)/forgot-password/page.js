@@ -62,7 +62,7 @@ export default function ForgotPassword() {
       
       setSuccessMsg('Check your email for the password reset link.');
     } catch (error) {
-      console.error('Password reset error:', error);
+      console.warn('Password reset error:', error);
       setErrorMsg(error.message || 'Failed to send reset link. Please try again.');
     } finally {
       setLoading(false);
@@ -264,6 +264,7 @@ export default function ForgotPassword() {
         .login-wrapper {
           height: 100vh;
           width: 100%;
+          flex: 1; /* body is display:flex — fill it rather than shrink-wrap */
           display: flex;
           align-items: center;
           justify-content: center;

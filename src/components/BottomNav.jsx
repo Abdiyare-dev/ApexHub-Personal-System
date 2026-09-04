@@ -36,7 +36,6 @@ const Icons = {
 };
 
 const FINANCE_LINKS = [
-  { label: 'Finance Dashboard', tab: 'Finance Dashboard' },
   { label: 'Cash In', tab: 'Finance Cash In' },
   { label: 'Expenses', tab: 'Finance Expenses' },
   { label: 'Budget', tab: 'Finance Budget' },
@@ -45,7 +44,6 @@ const FINANCE_LINKS = [
 ];
 
 const PRODUCTIVITY_LINKS = [
-  { label: 'Prod. Dashboard', tab: 'Productivity Dashboard' },
   { label: 'Tasks', tab: 'Productivity Tasks' },
   { label: 'Projects', tab: 'Productivity Projects' },
   { label: 'Habits', tab: 'Productivity Habits' },

@@ -242,8 +242,6 @@ export default function Sidebar() {
 
           {/* PRODUCTIVITY */}
           <SectionHeader label="Productivity" colorClass="productivity" isFirst collapsed={collapsed} />
-          <NavItem icon={Icon.ProdDash} label="Prod. Dashboard" tabKey="Productivity Dashboard"
-            activeTab={activeTab} onClick={handleTabClick} collapsed={collapsed} />
           <NavItem icon={Icon.Tasks} label="Tasks" tabKey="Productivity Tasks"
             activeTab={activeTab} onClick={handleTabClick} badge={pendingTasks} collapsed={collapsed} />
           <NavItem icon={Icon.Projects} label="Projects" tabKey="Productivity Projects"
@@ -259,8 +257,6 @@ export default function Sidebar() {
 
           {/* FINANCE */}
           <SectionHeader label="Finance" colorClass="finance" collapsed={collapsed} />
-          <NavItem icon={Icon.FinanceDash} label="Finance Dashboard" tabKey="Finance Dashboard"
-            activeTab={activeTab} onClick={handleTabClick} collapsed={collapsed} />
           <NavItem icon={Icon.CashIn} label="Cash In" tabKey="Finance Cash In"
             activeTab={activeTab} onClick={handleTabClick} collapsed={collapsed} />
           <NavItem icon={Icon.Expenses} label="Expenses" tabKey="Finance Expenses"

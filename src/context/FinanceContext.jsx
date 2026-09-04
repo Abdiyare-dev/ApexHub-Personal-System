@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { seedDefaultCategories } from '@/lib/seedCategories';
+import { formatError } from '@/lib/formatError';
 
 const FinanceContext = createContext();
 
@@ -42,7 +43,9 @@ export function FinanceProvider({ children }) {
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
-      if (!txError && txData) {
+      if (txError) {
+        console.warn('[finance] could not load transactions:', formatError(txError));
+      } else if (txData) {
         setTransactions(txData);
       }
 
@@ -66,7 +69,7 @@ export function FinanceProvider({ children }) {
 
       if (savingsData) setSavingsGoals(savingsData);
     } catch (err) {
-      console.error('Error fetching finance data:', err);
+      console.error('[finance] failed to load finance data:', formatError(err));
     } finally {
       setLoading(false);
     }

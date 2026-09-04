@@ -41,7 +41,7 @@ export default function UpdatePassword() {
         router.replace('/login');
       }, 2000);
     } catch (error) {
-      console.error('Password update error:', error);
+      console.warn('Password update error:', error);
       setErrorMsg(error.message || 'Failed to update password. Please try again.');
     } finally {
       setLoading(false);
@@ -134,10 +134,11 @@ export default function UpdatePassword() {
         .login-wrapper {
           height: 100vh;
           width: 100%;
+          flex: 1; /* body is display:flex — fill it rather than shrink-wrap */
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-main);
+          background: var(--bg-body);
           position: relative;
           overflow: hidden;
           font-family: inherit;

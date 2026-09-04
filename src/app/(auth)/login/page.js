@@ -21,6 +21,7 @@ export default function Login() {
   // Detect if we are returning from an OAuth redirect (URL has a code/token)
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
 
+
   useEffect(() => {
     // Check for OAuth callback params in URL (hash or query)
     const hash = window.location.hash;
@@ -68,7 +69,7 @@ export default function Login() {
       }
     } catch (error) {
       // Supabase error handling
-      console.error('Auth error:', error);
+      console.warn('Auth error:', error);
       setErrorMsg(error.message || "Authentication failed. Please try again.");
     }
   };
@@ -101,7 +102,7 @@ export default function Login() {
         </div>
         <style jsx>{`
           .login-wrapper {
-            height: 100vh; width: 100%; display: flex; align-items: center;
+            height: 100vh; width: 100%; flex: 1; display: flex; align-items: center;
             justify-content: center; background: var(--bg-body);
             position: relative; overflow: hidden;
           }
@@ -153,13 +154,14 @@ export default function Login() {
         {/* Left Side: Authentication Form */}
         <div className="login-form-area">
           <div className="login-card glass-3d">
-            <div className="logo-header" style={{ flexDirection: 'row', alignItems: 'center', gap: '16px', marginBottom: '24px', justifyContent: 'center' }}>
+            {/* Brand doubles as the way back to the public landing page */}
+            <Link href="/" className="logo-header brand-home-link" style={{ flexDirection: 'row', alignItems: 'center', gap: '16px', marginBottom: '24px', justifyContent: 'center', display: 'flex' }}>
               <img src="/icon_logo.png" alt="ApexHub Logo" width="56" height="56" style={{ borderRadius: '14px', objectFit: 'cover', boxShadow: '0 6px 16px rgba(0, 160, 255, 0.35)' }} />
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <h1 className="hero-greeting" style={{ lineHeight: '1', fontSize: '1.8rem', margin: 0 }}>ApexHub</h1>
                 <span style={{ fontSize: '0.72rem', fontWeight: '800', opacity: 0.9, letterSpacing: '0.6px', textTransform: 'uppercase', marginTop: '4px', textAlign: 'left', color: 'var(--accent)' }}>Personal Development System</span>
               </div>
-            </div>
+            </Link>
             
             <div className="hero-subtitle-container" style={{
               background: 'rgba(59, 130, 246, 0.05)',
@@ -351,10 +353,11 @@ export default function Login() {
         .login-wrapper {
           height: 100vh;
           width: 100%;
+          flex: 1; /* body is display:flex — fill it rather than shrink-wrap */
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-main);
+          background: var(--bg-body);
           position: relative;
           overflow: hidden; /* Standardize for no-scroll fit */
           font-family: inherit;
@@ -436,6 +439,18 @@ export default function Login() {
           align-items: center;
           gap: 12px;
           margin-bottom: 8px;
+        }
+
+        /* Brand links back to the public landing page */
+        .brand-home-link {
+          text-decoration: none;
+          color: inherit;
+          border-radius: 14px;
+          transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+        }
+        .brand-home-link:hover {
+          transform: translateY(-2px);
+          opacity: 0.92;
         }
         
         .logo-icon {
@@ -613,6 +628,7 @@ export default function Login() {
           }
         }
       `}</style>
+
     </div>
   );
 }

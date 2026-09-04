@@ -1,4 +1,5 @@
 import { createClient } from './supabase/client.js';
+import { formatError } from './formatError.js';
 
 export const DEFAULT_CATEGORIES = [
   // Income
@@ -34,7 +35,9 @@ export async function seedDefaultCategories(userId) {
       .eq('user_id', userId);
 
     if (fetchError) {
-      console.error('Error fetching categories for seed check:', fetchError);
+      // Recoverable: we return [] and the UI renders empty rather than breaking.
+      // console.warn (not .error) so Next.js dev overlay does not report it as a crash.
+      console.warn('[seedCategories] could not read categories:', formatError(fetchError));
       return [];
     }
 
@@ -57,13 +60,13 @@ export async function seedDefaultCategories(userId) {
       .select();
 
     if (insertError) {
-      console.error('Error seeding default categories:', insertError);
+      console.warn('[seedCategories] could not insert defaults:', formatError(insertError));
       return [];
     }
 
     return inserted || [];
   } catch (err) {
-    console.error('Unexpected error in seedDefaultCategories:', err);
+    console.error('[seedCategories] unexpected failure:', formatError(err));
     return [];
   }
 }

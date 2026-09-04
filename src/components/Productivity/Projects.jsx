@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useProductivity } from '@/context/ProductivityContext';
 import Modal from '@/components/Common/Modal';
+import EmptyState from '@/components/ui/EmptyState';
 
 export default function Projects() {
   const { 
@@ -118,7 +119,13 @@ export default function Projects() {
       <div className="projects-list-container">
         <div className="projects-grid">
           {projects.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No projects active right now. Click '+ Create Project' to start one.</p>
+            <EmptyState
+              icon="📁"
+              title="No projects yet"
+              text="Group related work into a project and track its tasks in one place."
+              actionLabel="Create project"
+              onAction={() => setIsModalOpen(true)}
+            />
           ) : (
             projects.map(p => {
               const status = getProjectStatus(p);

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useProductivity } from '@/context/ProductivityContext';
 import Modal from '@/components/Common/Modal';
+import EmptyState from '@/components/ui/EmptyState';
 
 export default function Goals() {
   const { goals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone } = useProductivity();
@@ -45,7 +46,13 @@ export default function Goals() {
       <div className="goals-list-container">
         <div className="goals-grid">
           {goals.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)' }}>No goals active. Click '+ Create Goal' to start tracking.</p>
+            <EmptyState
+              icon="🎯"
+              title="No goals yet"
+              text="Set a goal, break it into milestones, and track completion as you go."
+              actionLabel="Create goal"
+              onAction={() => setIsModalOpen(true)}
+            />
           ) : (
             goals.map(g => (
               <div key={g.id} className="goal-card">

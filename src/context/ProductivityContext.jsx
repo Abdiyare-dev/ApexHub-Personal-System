@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { formatError } from '@/lib/formatError';
 
 const ProductivityContext = createContext();
 
@@ -62,7 +63,7 @@ export function ProductivityProvider({ children }) {
       if (g) setGoals(JSON.parse(g));
       if (p) setProjects(JSON.parse(p));
       if (pt) setProjectTypes(JSON.parse(pt));
-    } catch (e) { console.error('Error loading productivity from localStorage:', e); }
+    } catch (e) { console.warn('[productivity] could not read local cache:', formatError(e)); }
   };
 
   const saveLS = (key, data) => localStorage.setItem(key, JSON.stringify(data));
@@ -81,12 +82,41 @@ export function ProductivityProvider({ children }) {
     if (mData?.project_types) setProjectTypes(mData.project_types);
   };
 
+  // Re-read one table after a write.
+  //
+  // Every mutation below used to depend on the Supabase Realtime subscription
+  // to refresh the UI. Realtime has to be enabled per-table (the table must be
+  // added to the supabase_realtime publication) and it never was, so writes
+  // succeeded in the database while the UI silently kept showing stale data
+  // until a full page reload. These helpers make each write update the UI on
+  // its own; realtime, if it is ever switched on, simply refreshes again.
+  const refetch = async (table, setter, normalizer) => {
+    const userId = getUserId();
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.warn(`[productivity] could not refresh ${table}:`, formatError(error));
+      return;
+    }
+    if (data) setter(normalizer ? data.map(normalizer) : data);
+  };
+
+  const refreshTasks    = () => refetch('tasks', setTasks, normalizeTask);
+  const refreshGoals    = () => refetch('goals', setGoals, normalizeGoal);
+  const refreshProjects = () => refetch('projects', setProjects, normalizeProject);
+
   const syncMeta = async (newMeta) => {
     if (!user || isMockUser) return;
     const { error } = await supabase
       .from('productivity_meta')
       .upsert({ user_id: getUserId(), ...newMeta }, { onConflict: 'user_id' });
-    if (error) console.error('Error syncing productivity meta:', error);
+    // Recoverable: project types still work for this session, they just do
+    // not persist until the productivity_meta table exists (see migrations).
+    if (error) console.warn('[productivity] could not persist project types:', formatError(error));
   };
 
   // ── EFFECT ───────────────────────────────────────────────────────────────
@@ -152,7 +182,8 @@ export function ProductivityProvider({ children }) {
     if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
     
     const { error } = await supabase.from('tasks').insert(dbTask);
-    if (error) { console.error('Error adding task:', error); throw error; }
+    if (error) { console.error('[productivity] add task failed:', formatError(error)); throw error; }
+    await refreshTasks();
   };
 
   const updateTaskStatus = async (id, newStatus) => {
@@ -162,6 +193,7 @@ export function ProductivityProvider({ children }) {
       setTasks(updated); saveLS(LS_KEYS.tasks, updated); return;
     }
     await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
+    await refreshTasks();
   };
 
   const updateTask = async (id, updatedTask) => {
@@ -176,6 +208,7 @@ export function ProductivityProvider({ children }) {
     if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
     
     await supabase.from('tasks').update(dbTask).eq('id', id);
+    await refreshTasks();
   };
 
   const deleteTask = async (id) => {
@@ -185,6 +218,7 @@ export function ProductivityProvider({ children }) {
       setTasks(updated); saveLS(LS_KEYS.tasks, updated); return;
     }
     await supabase.from('tasks').delete().eq('id', id);
+    await refreshTasks();
   };
 
   // ── GOAL ACTIONS ──────────────────────────────────────────────────────────
@@ -202,7 +236,8 @@ export function ProductivityProvider({ children }) {
     if (dbGoal.currentAmount !== undefined) { dbGoal.current_amount = dbGoal.currentAmount; delete dbGoal.currentAmount; }
     
     const { error } = await supabase.from('goals').insert(dbGoal);
-    if (error) { console.error('Error adding goal:', error); throw error; }
+    if (error) { console.error('[productivity] add goal failed:', formatError(error)); throw error; }
+    await refreshGoals();
   };
 
   const deleteGoal = async (id) => {
@@ -212,6 +247,7 @@ export function ProductivityProvider({ children }) {
       setGoals(updated); saveLS(LS_KEYS.goals, updated); return;
     }
     await supabase.from('goals').delete().eq('id', id);
+    await refreshGoals();
   };
 
   const addGoalMilestone = async (goalId, text) => {
@@ -224,6 +260,7 @@ export function ProductivityProvider({ children }) {
       setGoals(updated); saveLS(LS_KEYS.goals, updated); return;
     }
     await supabase.from('goals').update({ milestones: updatedMilestones }).eq('id', goalId);
+    await refreshGoals();
   };
 
   const toggleGoalMilestone = async (goalId, milestoneId) => {
@@ -236,6 +273,7 @@ export function ProductivityProvider({ children }) {
       setGoals(updated); saveLS(LS_KEYS.goals, updated); return;
     }
     await supabase.from('goals').update({ milestones: updatedMilestones }).eq('id', goalId);
+    await refreshGoals();
   };
 
   const deleteGoalMilestone = async (goalId, milestoneId) => {
@@ -248,6 +286,7 @@ export function ProductivityProvider({ children }) {
       setGoals(updated); saveLS(LS_KEYS.goals, updated); return;
     }
     await supabase.from('goals').update({ milestones: updatedMilestones }).eq('id', goalId);
+    await refreshGoals();
   };
 
   const computedGoals = goals.map(g => {
@@ -271,7 +310,8 @@ export function ProductivityProvider({ children }) {
     if (dbProject.dueDate !== undefined) { dbProject.due_date = dbProject.dueDate; delete dbProject.dueDate; }
     
     const { error } = await supabase.from('projects').insert(dbProject);
-    if (error) { console.error('Error adding project:', error); throw error; }
+    if (error) { console.error('[productivity] add project failed:', formatError(error)); throw error; }
+    await refreshProjects();
   };
 
   const addProjectType = async (type) => {
@@ -297,6 +337,7 @@ export function ProductivityProvider({ children }) {
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
     }
     await supabase.from('projects').delete().eq('id', id);
+    await refreshProjects();
   };
 
   const toggleProjectComplete = async (id) => {
@@ -308,6 +349,7 @@ export function ProductivityProvider({ children }) {
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
     }
     await supabase.from('projects').update({ is_completed: !project.is_completed }).eq('id', id);
+    await refreshProjects();
   };
 
   const addProjectTask = async (projectId, text) => {
@@ -320,6 +362,7 @@ export function ProductivityProvider({ children }) {
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
     }
     await supabase.from('projects').update({ tasks: updatedTasks }).eq('id', projectId);
+    await refreshProjects();
   };
 
   const toggleProjectTask = async (projectId, taskId) => {
@@ -332,6 +375,7 @@ export function ProductivityProvider({ children }) {
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
     }
     await supabase.from('projects').update({ tasks: updatedTasks }).eq('id', projectId);
+    await refreshProjects();
   };
 
   const deleteProjectTask = async (projectId, taskId) => {
@@ -344,6 +388,7 @@ export function ProductivityProvider({ children }) {
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
     }
     await supabase.from('projects').update({ tasks: updatedTasks }).eq('id', projectId);
+    await refreshProjects();
   };
 
   return (

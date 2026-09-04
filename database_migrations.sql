@@ -226,3 +226,36 @@ CREATE TRIGGER update_timetable_updated_at
   BEFORE UPDATE ON timetable_entries FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_journal_updated_at
   BEFORE UPDATE ON journal_entries FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================================================
+-- MISSING PIECES (added after a schema audit — run these in Supabase SQL editor)
+-- ============================================================================
+
+-- 1. productivity_meta
+-- ProductivityContext reads and upserts this table to persist custom project
+-- types, but it was never created. Every load logged a "table not found" error
+-- and custom project types silently vanished on refresh.
+CREATE TABLE IF NOT EXISTS productivity_meta (
+  user_id       uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  project_types jsonb DEFAULT '[]'::jsonb,
+  updated_at    timestamptz DEFAULT now()
+);
+
+ALTER TABLE productivity_meta ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own productivity meta" ON productivity_meta;
+CREATE POLICY "Users manage own productivity meta" ON productivity_meta
+  FOR ALL USING (auth.uid() = user_id);
+
+-- 2. OPTIONAL — live sync across devices/tabs.
+-- The app no longer depends on realtime (every write refreshes its own data),
+-- but enabling this makes changes appear instantly in other open tabs.
+-- ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE goals;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE projects;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
+
+-- NOTE: `tasks`, `categories` and `transactions` exist in the live database but
+-- have no CREATE TABLE here — they were created outside this file. Verify their
+-- RLS is enabled and scoped to auth.uid() = user_id, e.g.:
+--   SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';

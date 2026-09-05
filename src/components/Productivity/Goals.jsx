@@ -1,18 +1,52 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProductivity } from '@/context/ProductivityContext';
 import Modal from '@/components/Common/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import RoadmapVisualizer from '@/components/goals/RoadmapVisualizer';
 
 export default function Goals() {
-  const { goals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone } = useProductivity();
+  const { goals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone, projects, tasks } = useProductivity();
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Yearly');
   const [newMilestoneText, setNewMilestoneText] = useState({});
   const [activeTabMap, setActiveTabMap] = useState({});
+  
+  // Switcher State
+  const [mainView, setMainView] = useState('list'); // 'list' | 'roadmap'
+  const [generalRoadmapFilter, setGeneralRoadmapFilter] = useState('all'); // 'all' | 'projects' | 'tasks'
+
+  // Combine and sort projects and tasks for the General Roadmap
+  const generalMilestones = useMemo(() => {
+    let combined = [];
+    if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'projects') {
+      combined.push(...(projects || []).map(p => ({
+        id: p.id,
+        text: p.name || 'Unnamed Project',
+        state: (p.is_completed || p.isCompleted) ? 'completed' : 'active',
+        type: 'project',
+        createdAt: new Date(p.created_at || Date.now()).getTime()
+      })));
+    }
+    if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'tasks') {
+      combined.push(...(tasks || []).map(t => ({
+        id: t.id,
+        text: t.title || t.text || 'Unnamed Task',
+        state: t.status === 'Completed' ? 'completed' : 'active',
+        type: 'task',
+        createdAt: new Date(t.created_at || Date.now()).getTime()
+      })));
+    }
+    // Sort by oldest first
+    combined.sort((a, b) => a.createdAt - b.createdAt);
+    
+    // Limit to prevent huge SVG breaking
+    const limit = combined.slice(-30);
+    
+    return limit.map((m, idx) => ({ ...m, step: idx + 1 }));
+  }, [projects, tasks, generalRoadmapFilter]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,20 +79,77 @@ export default function Goals() {
 
   return (
     <div className="module-container fade-in">
-      <div className="hero-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="hero-section" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className="hero-greeting">Personal Goals</h2>
           <p className="hero-subtitle">Define and track your overarching objectives.</p>
         </div>
-        <button className="create-goal-btn" onClick={() => setIsModalOpen(true)}>
-           + Create Goal
-        </button>
+        
+        {/* Main View Switcher */}
+        <div className="segmented-control">
+          <button 
+            className={`seg-btn ${mainView === 'list' ? 'active' : ''}`}
+            onClick={() => setMainView('list')}
+          >
+            Goals List
+          </button>
+          <button 
+            className={`seg-btn ${mainView === 'roadmap' ? 'active' : ''}`}
+            onClick={() => setMainView('roadmap')}
+          >
+            General Roadmap
+          </button>
+        </div>
+        
+        {mainView === 'list' && (
+          <button className="create-goal-btn" onClick={() => setIsModalOpen(true)}>
+             + Create Goal
+          </button>
+        )}
       </div>
 
       <div className="goals-list-container">
-        <div className="goals-grid">
-          {goals.length === 0 ? (
-            <EmptyState
+        {mainView === 'roadmap' ? (
+          <div className="general-roadmap-container">
+            <div className="roadmap-filter-switcher">
+              <div className="segmented-control small">
+                <button 
+                  className={`seg-btn ${generalRoadmapFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setGeneralRoadmapFilter('all')}
+                >
+                  All
+                </button>
+                <button 
+                  className={`seg-btn ${generalRoadmapFilter === 'projects' ? 'active' : ''}`}
+                  onClick={() => setGeneralRoadmapFilter('projects')}
+                >
+                  Projects
+                </button>
+                <button 
+                  className={`seg-btn ${generalRoadmapFilter === 'tasks' ? 'active' : ''}`}
+                  onClick={() => setGeneralRoadmapFilter('tasks')}
+                >
+                  Tasks
+                </button>
+              </div>
+            </div>
+            
+            <div className="roadmap-section-wrapper standalone">
+              {generalMilestones.length > 0 ? (
+                <RoadmapVisualizer 
+                  milestones={generalMilestones} 
+                  goalTitle="General Progress Roadmap" 
+                  goalColor="#3b82f6" 
+                />
+              ) : (
+                <EmptyState icon="🛣️" title="No items to map" text="Create some tasks or projects to see them on the roadmap." />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="goals-grid">
+            {goals.length === 0 ? (
+              <EmptyState
               icon="🎯"
               title="No goals yet"
               text="Set a goal, break it into milestones, and track completion as you go."
@@ -143,6 +234,7 @@ export default function Goals() {
             ))
           )}
         </div>
+        )}
       </div>
 
       {/* CREATE GOAL MODAL */}
@@ -180,6 +272,13 @@ export default function Goals() {
       </Modal>
 
       <style jsx>{`
+        .segmented-control { display: flex; background: var(--surface-low); border-radius: 12px; padding: 4px; gap: 4px; border: 1px solid var(--border-color); }
+        .segmented-control.small { border-radius: 8px; padding: 3px; }
+        .seg-btn { flex: 1; padding: 8px 16px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .segmented-control.small .seg-btn { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
+        .seg-btn.active { background: var(--surface); color: var(--text-primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .seg-btn:hover:not(.active) { color: var(--text-primary); }
+
         .create-goal-btn {
           background: linear-gradient(135deg, var(--accent-start), #0284c7);
           color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700;

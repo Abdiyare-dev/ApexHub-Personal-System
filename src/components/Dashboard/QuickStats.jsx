@@ -8,8 +8,8 @@ import { useProductivity } from '@/context/ProductivityContext';
 const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
 export default function QuickStats() {
-  const { transactions } = useFinance();
-  const { tasks, goals, projects } = useProductivity();
+  const { transactions = [] } = useFinance() || {};
+  const { tasks = [], goals = [], projects = [] } = useProductivity() || {};
   
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef(null);
@@ -32,19 +32,23 @@ export default function QuickStats() {
     return () => observer.disconnect();
   }, []);
 
+  const safeTx = Array.isArray(transactions) ? transactions : [];
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const safeGoals = Array.isArray(goals) ? goals : [];
+
   // Compute Live Finance
-  const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const income = safeTx.filter(t => t && t.type === 'income').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const expenses = safeTx.filter(t => t && t.type === 'expense').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
   const balance = income - expenses;
 
   // Calculate Live Productivity
-  const completedTasks = tasks.filter(t => t.status === 'Completed').length;
-  const totalTasks = tasks.length || 1;
+  const completedTasks = safeTasks.filter(t => t && t.status === 'Completed').length;
+  const totalTasks = safeTasks.length || 1;
   const completionRate = Math.round((completedTasks / totalTasks) * 100);
 
   // Active Goals
   // Our goals logic tracks { title, type, completionRate }
-  const activeGoals = goals.slice(0, 3);
+  const activeGoals = safeGoals.slice(0, 3);
 
   return (
     <section className="quick-stats-section" ref={sectionRef}>

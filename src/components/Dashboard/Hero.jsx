@@ -101,22 +101,26 @@ function AnimatedNumber({ value, isCurrency, isPercent }) {
 }
 
 export default function Hero() {
-  const { tasks, projects, goals } = useProductivity();
-  const { transactions } = useFinance();
+  const { tasks = [], projects = [], goals = [] } = useProductivity() || {};
+  const { transactions = [] } = useFinance() || {};
   
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const safeTx = Array.isArray(transactions) ? transactions : [];
+  const safeGoals = Array.isArray(goals) ? goals : [];
+
   // Calculate real metrics
-  const activeProjects = projects ? projects.filter(p => !p.isCompleted).length : 0;
-  const pendingTasks = tasks.filter(t => t.status !== 'Completed').length;
+  const activeProjects = safeProjects.filter(p => p && !p.isCompleted).length;
+  const pendingTasks = safeTasks.filter(t => t && t.status !== 'Completed').length;
   
   // Calculate recent expenses (last 30 days roughly, or just total expenses for simplicity)
-  const recentExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((acc, t) => acc + t.amount, 0);
+  const recentExpenses = safeTx
+    .filter(t => t && t.type === 'expense')
+    .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
 
   // Calculate average goal progress
-  const activeGoals = goals || [];
-  const overallGoalProgress = activeGoals.length > 0 
-    ? Math.round(activeGoals.reduce((acc, g) => acc + (g.completionRate || 0), 0) / activeGoals.length)
+  const overallGoalProgress = safeGoals.length > 0 
+    ? Math.round(safeGoals.reduce((acc, g) => acc + (Number(g.completionRate) || 0), 0) / safeGoals.length)
     : 0;
 
   // Real data store to map keys

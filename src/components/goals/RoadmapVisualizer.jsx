@@ -27,13 +27,19 @@ export default function RoadmapVisualizer({ milestones = [], goalColor = '#8b5cf
     let firstIncompleteFound = false;
     return safeMilestones.map((m, idx) => {
       let state = 'locked';
-      if (m.completed) {
+      const isDone = m.completed === true || m.state === 'completed';
+      if (isDone) {
         state = 'completed';
       } else if (!firstIncompleteFound) {
         state = 'active';
         firstIncompleteFound = true;
       }
-      return { ...m, state, step: idx + 1 };
+      return { 
+        ...m, 
+        state, 
+        step: idx + 1,
+        text: m.text || m.title || m.name || `Milestone ${idx + 1}`
+      };
     });
   }, [safeMilestones]);
 
@@ -171,13 +177,14 @@ export default function RoadmapVisualizer({ milestones = [], goalColor = '#8b5cf
             const labelYOffset = isMobile ? 0 : (pos.y > 150 ? 40 : -40);
             const textAnchor = isMobile ? (pos.x > 150 ? 'end' : 'start') : 'middle';
 
+            const nodeKey = m.id || `node-${idx}`;
             return (
               <g 
-                key={m.id} 
+                key={nodeKey} 
                 className="node-group" 
                 style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
-                onClick={() => setHoveredNode(hoveredNode === m.id ? null : m.id)}
-                onMouseEnter={() => setHoveredNode(m.id)}
+                onClick={() => setHoveredNode(hoveredNode === nodeKey ? null : nodeKey)}
+                onMouseEnter={() => setHoveredNode(nodeKey)}
                 onMouseLeave={() => setHoveredNode(null)}
               >
                 {/* Background shadow/glow */}

@@ -44,10 +44,10 @@ function greeting() {
 }
 
 export default function SummaryAnalytics({ onNavigate }) {
-  const { transactions } = useFinance();
-  const { tasks, goals, projects } = useProductivity();
-  const { user } = useAuth();
-  const { theme } = useTheme();
+  const { transactions = [] } = useFinance() || {};
+  const { tasks = [], goals = [], projects = [] } = useProductivity() || {};
+  const { user } = useAuth() || {};
+  const { theme } = useTheme() || {};
   const isDark = theme === 'dark';
 
   const firstName = (user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'there').split(' ')[0];
@@ -91,10 +91,14 @@ export default function SummaryAnalytics({ onNavigate }) {
   useEffect(() => { loadFinance(); }, [loadFinance, transactions]);
 
   // ── Derived productivity metrics ──
-  const completedTasks = tasks.filter((t) => t.status === 'Completed').length;
-  const taskRate = tasks.length ? Math.round((completedTasks / tasks.length) * 100) : 0;
-  const openTasks = tasks.length - completedTasks;
-  const activeProjects = projects.filter((p) => !p.isCompleted);
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  const safeGoals = Array.isArray(goals) ? goals : [];
+
+  const completedTasks = safeTasks.filter((t) => t && t.status === 'Completed').length;
+  const taskRate = safeTasks.length ? Math.round((completedTasks / safeTasks.length) * 100) : 0;
+  const openTasks = safeTasks.length - completedTasks;
+  const activeProjects = safeProjects.filter((p) => p && !p.isCompleted);
 
   const projectChart = useMemo(() => (
     activeProjects.slice(0, 6).map((p) => ({
@@ -105,8 +109,8 @@ export default function SummaryAnalytics({ onNavigate }) {
   ), [activeProjects]);
 
   const topGoals = useMemo(
-    () => [...goals].sort((a, b) => (b.completionRate || 0) - (a.completionRate || 0)).slice(0, 4),
-    [goals]
+    () => [...safeGoals].sort((a, b) => (b.completionRate || 0) - (a.completionRate || 0)).slice(0, 4),
+    [safeGoals]
   );
 
   const trendData = summary.monthlyTrend || [];

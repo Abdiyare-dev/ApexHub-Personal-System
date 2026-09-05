@@ -8,11 +8,11 @@ import { useFinance } from '@/context/FinanceContext';
 import { useProductivity } from '@/context/ProductivityContext';
 
 export default function TopNav() {
-  const { theme, toggleTheme } = useTheme();
-  const { openMobileSidebar } = useNavigation();
-  const { user, logout } = useAuth();
-  const { transactions, budgets } = useFinance();
-  const { tasks, projects } = useProductivity();
+  const { theme, toggleTheme } = useTheme() || {};
+  const { activeTab } = useNavigation();
+  const { user, logout } = useAuth() || {};
+  const { transactions = [], budgets = [] } = useFinance() || {};
+  const { tasks = [], projects = [] } = useProductivity() || {};
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -38,9 +38,11 @@ export default function TopNav() {
     const list = [];
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
+    const safeTasks = Array.isArray(tasks) ? tasks : [];
+    const safeProjects = Array.isArray(projects) ? projects : [];
 
     // 1. Overdue Tasks
-    tasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) < now && !t.dueDate.startsWith(todayStr)).forEach(t => {
+    safeTasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) < now && !t.dueDate.startsWith(todayStr)).forEach(t => {
       list.push({
         id: `overdue-task-${t.id}`,
         type: 'overdue',
@@ -58,7 +60,7 @@ export default function TopNav() {
     // 2. Tasks Due Soon (Next 3 days)
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(now.getDate() + 3);
-    tasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) > now && new Date(t.dueDate) <= threeDaysFromNow && !t.dueDate.startsWith(todayStr)).forEach(t => {
+    safeTasks.filter(t => t.status !== 'Completed' && t.dueDate && new Date(t.dueDate) > now && new Date(t.dueDate) <= threeDaysFromNow && !t.dueDate.startsWith(todayStr)).forEach(t => {
       list.push({
         id: `soon-task-${t.id}`,
         type: 'soon',
@@ -74,7 +76,7 @@ export default function TopNav() {
     });
 
     // 3. Due Today
-    tasks.filter(t => t.status !== 'Completed' && t.dueDate && t.dueDate.startsWith(todayStr)).forEach(t => {
+    safeTasks.filter(t => t.status !== 'Completed' && t.dueDate && t.dueDate.startsWith(todayStr)).forEach(t => {
       list.push({
         id: `today-task-${t.id}`,
         type: 'today',
@@ -90,7 +92,7 @@ export default function TopNav() {
     });
 
     // 4. Projects Overdue
-    projects.filter(p => !p.is_completed && p.dueDate && new Date(p.dueDate) < now && !p.dueDate.startsWith(todayStr)).forEach(p => {
+    safeProjects.filter(p => !p.is_completed && p.dueDate && new Date(p.dueDate) < now && !p.dueDate.startsWith(todayStr)).forEach(p => {
       list.push({
         id: `overdue-project-${p.id}`,
         type: 'overdue',
@@ -106,7 +108,7 @@ export default function TopNav() {
     });
 
     // 5. Projects Due Soon
-    projects.filter(p => !p.is_completed && p.dueDate && new Date(p.dueDate) > now && new Date(p.dueDate) <= threeDaysFromNow && !p.dueDate.startsWith(todayStr)).forEach(p => {
+    safeProjects.filter(p => !p.is_completed && p.dueDate && new Date(p.dueDate) > now && new Date(p.dueDate) <= threeDaysFromNow && !p.dueDate.startsWith(todayStr)).forEach(p => {
       list.push({
         id: `soon-project-${p.id}`,
         type: 'soon',
@@ -124,9 +126,10 @@ export default function TopNav() {
     // 6. Budget Alert
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    const monthlyExpenses = transactions
-      .filter(t => t.type === 'expense' && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
-      .reduce((sum, t) => sum + t.amount, 0);
+    const safeTx = Array.isArray(transactions) ? transactions : [];
+    const monthlyExpenses = safeTx
+      .filter(t => t && t.type === 'expense' && t.date && new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
     const planned = Array.isArray(budgets) 
       ? budgets.reduce((sum, b) => sum + Number(b.amount || 0), 0) 
@@ -151,9 +154,8 @@ export default function TopNav() {
 
     return list;
   }, [tasks, projects, transactions, budgets]);
-
   return (
-    <header className="top-nav" role="banner">
+    <header className="topnav" id="topnav" role="banner">
       <div className="left-actions">
         <h1 className="page-title">{activeTab}</h1>
       </div>

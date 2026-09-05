@@ -59,11 +59,11 @@ function getActiveBottomTab(activeTab) {
 }
 
 export default function BottomNav() {
-  const { activeTab, setActiveTab } = useNavigation();
-  const { tasks } = useProductivity();
+  const { activeTab, setActiveTab } = useNavigation() || {};
+  const { tasks = [] } = useProductivity() || {};
   const [openPopover, setOpenPopover] = useState(null);
   const containerRef = useRef(null);
-  const pendingTasks = tasks.filter(t => t.status !== 'Completed').length;
+  const pendingTasks = (Array.isArray(tasks) ? tasks : []).filter(t => t && t.status !== 'Completed').length;
 
   // Close popover on outside click/tap
   useEffect(() => {

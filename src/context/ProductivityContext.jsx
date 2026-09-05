@@ -184,7 +184,7 @@ export function ProductivityProvider({ children }) {
     if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
     
     const { error } = await supabase.from('tasks').insert(dbTask);
-    if (error) { console.error('[productivity] add task failed:', formatError(error)); throw error; }
+    if (error) { console.warn('[productivity] add task failed:', formatError(error)); throw error; }
     await refreshTasks();
   };
 
@@ -238,7 +238,7 @@ export function ProductivityProvider({ children }) {
     if (dbGoal.currentAmount !== undefined) { dbGoal.current_amount = dbGoal.currentAmount; delete dbGoal.currentAmount; }
     
     const { error } = await supabase.from('goals').insert(dbGoal);
-    if (error) { console.error('[productivity] add goal failed:', formatError(error)); throw error; }
+    if (error) { console.warn('[productivity] add goal failed:', formatError(error)); throw error; }
     await refreshGoals();
   };
 
@@ -315,7 +315,7 @@ export function ProductivityProvider({ children }) {
     if (dbProject.dueDate !== undefined) { dbProject.due_date = dbProject.dueDate; delete dbProject.dueDate; }
     
     const { error } = await supabase.from('projects').insert(dbProject);
-    if (error) { console.error('[productivity] add project failed:', formatError(error)); throw error; }
+    if (error) { console.warn('[productivity] add project failed:', formatError(error)); throw error; }
     await refreshProjects();
   };
 

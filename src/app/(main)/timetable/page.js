@@ -262,6 +262,7 @@ export default function TimetablePage() {
 
     try {
       const data = await file.arrayBuffer();
+      const XLSX = await import('xlsx');
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
@@ -943,8 +944,8 @@ export default function TimetablePage() {
           position: absolute;
           left: 4px;
           right: 4px;
-          border-radius: 10px;
-          padding: 6px 10px;
+          border-radius: 8px;
+          padding: 4px 6px;
           border: 1px solid;
           border-left-width: 4px;
           cursor: pointer;
@@ -962,11 +963,15 @@ export default function TimetablePage() {
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
         }
         .block-title {
-          font-size: 0.82rem;
+          font-size: 0.78rem;
           font-weight: 700;
           color: var(--text-primary);
-          line-height: 1.25;
+          line-height: 1.15;
           word-break: break-word;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;

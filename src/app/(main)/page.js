@@ -3,24 +3,34 @@
 import { useNavigation } from "@/context/NavigationContext";
 import { useAuth } from "@/context/AuthContext";
 
+import dynamic from 'next/dynamic';
+
+const Loader = () => (
+  <div className="module-container fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+    <div style={{ color: 'var(--text-muted)' }}>Loading Module...</div>
+  </div>
+);
+
 // Core components
-import SummaryAnalytics from "@/components/Dashboard/SummaryAnalytics";
-import Settings from "@/components/Dashboard/Settings";
+const SummaryAnalytics = dynamic(() => import("@/components/Dashboard/SummaryAnalytics"), { loading: () => <Loader /> });
+const Settings = dynamic(() => import("@/components/Dashboard/Settings"), { loading: () => <Loader /> });
 
 // Finance components
-import CashIn from "@/components/Finance/CashIn";
-import Expenses from "@/components/Finance/Expenses";
-import Budget from "@/components/Finance/Budget";
-import Savings from "@/components/Finance/Savings";
-import Reports from "@/components/Finance/Reports";
+const CashIn = dynamic(() => import("@/components/Finance/CashIn"), { loading: () => <Loader /> });
+const Expenses = dynamic(() => import("@/components/Finance/Expenses"), { loading: () => <Loader /> });
+const Budget = dynamic(() => import("@/components/Finance/Budget"), { loading: () => <Loader /> });
+const Savings = dynamic(() => import("@/components/Finance/Savings"), { loading: () => <Loader /> });
+const Reports = dynamic(() => import("@/components/Finance/Reports"), { loading: () => <Loader /> });
 
 // Productivity components
-import Tasks from "@/components/Productivity/Tasks";
-import Habits from "@/components/Productivity/Habits";
-import Timetable from "@/components/Productivity/Timetable";
-import Goals from "@/components/Productivity/Goals";
-import Projects from "@/components/Productivity/Projects";
-import ProductivityReports from "@/components/Productivity/ProductivityReports";
+const Planner = dynamic(() => import("@/components/Planner/Planner"), { loading: () => <Loader /> });
+const Journal = dynamic(() => import("@/components/Journal/Journal"), { loading: () => <Loader /> });
+const Tasks = dynamic(() => import("@/components/Productivity/Tasks"), { loading: () => <Loader /> });
+const Habits = dynamic(() => import("@/components/Productivity/Habits"), { loading: () => <Loader /> });
+const Timetable = dynamic(() => import("@/components/Productivity/Timetable"), { loading: () => <Loader /> });
+const Goals = dynamic(() => import("@/components/Productivity/Goals"), { loading: () => <Loader /> });
+const Projects = dynamic(() => import("@/components/Productivity/Projects"), { loading: () => <Loader /> });
+const ProductivityReports = dynamic(() => import("@/components/Productivity/ProductivityReports"), { loading: () => <Loader /> });
 
 export default function Home() {
   const { activeTab, setActiveTab } = useNavigation();
@@ -42,6 +52,10 @@ export default function Home() {
       case 'Finance Savings':
       case 'Savings':              return <Savings />;
       case 'Finance Reports':      return <Reports />;
+      case 'Productivity Planner':
+      case 'Planner':              return <Planner />;
+      case 'Productivity Journal':
+      case 'Journal':              return <Journal />;
       case 'Productivity Tasks':
       case 'Tasks':                return <Tasks />;
       case 'Productivity Habits':

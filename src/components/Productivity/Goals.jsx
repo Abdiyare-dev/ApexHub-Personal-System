@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useProductivity } from '@/context/ProductivityContext';
 import Modal from '@/components/Common/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import RoadmapVisualizer from '@/components/goals/RoadmapVisualizer';
 
 export default function Goals() {
   const { goals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone } = useProductivity();
@@ -11,6 +12,7 @@ export default function Goals() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Yearly');
   const [newMilestoneText, setNewMilestoneText] = useState({});
+  const [activeTabMap, setActiveTabMap] = useState({});
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,36 +85,59 @@ export default function Goals() {
                     <div className="progress-bar-fill" style={{ width: `${g.completionRate}%` }}></div>
                   </div>
                   
-                  {/* Milestones Checklist */}
-                  <div className="milestones-section">
-                    <span className="milestones-title">Milestones</span>
-                    <ul className="milestone-list">
-                      {g.milestones?.map(m => (
-                        <li key={m.id} className={`milestone-item ${m.completed ? 'completed' : ''}`}>
-                          <input 
-                            type="checkbox" 
-                            checked={m.completed} 
-                            onChange={() => toggleGoalMilestone(g.id, m.id)} 
-                            className="milestone-checkbox"
-                          />
-                          <span className="milestone-text">{m.text}</span>
-                          <button onClick={() => deleteGoalMilestone(g.id, m.id)} className="btn-remove-milestone">✕</button>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    <div className="add-milestone-form">
-                      <input 
-                        type="text" 
-                        value={newMilestoneText[g.id] || ''}
-                        onChange={e => setNewMilestoneText(prev => ({ ...prev, [g.id]: e.target.value }))}
-                        placeholder="Add step..."
-                        className="glowing-input mini"
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone(g.id)}
-                      />
-                      <button onClick={() => handleAddMilestone(g.id)} className="btn-add-milestone">+</button>
-                    </div>
+                  <div className="goal-tabs">
+                    <button 
+                      className={`goal-tab-btn ${(activeTabMap[g.id] || 'milestones') === 'milestones' ? 'active' : ''}`}
+                      onClick={() => setActiveTabMap(prev => ({ ...prev, [g.id]: 'milestones' }))}
+                    >
+                      Milestones
+                    </button>
+                    <button 
+                      className={`goal-tab-btn ${(activeTabMap[g.id] || 'milestones') === 'roadmap' ? 'active' : ''}`}
+                      onClick={() => setActiveTabMap(prev => ({ ...prev, [g.id]: 'roadmap' }))}
+                    >
+                      Roadmap Visualizer
+                    </button>
                   </div>
+
+                  {(activeTabMap[g.id] || 'milestones') === 'milestones' ? (
+                    <div className="milestones-section">
+                      <ul className="milestone-list">
+                        {g.milestones?.map(m => (
+                          <li key={m.id} className={`milestone-item ${m.completed ? 'completed' : ''}`}>
+                            <input 
+                              type="checkbox" 
+                              checked={m.completed} 
+                              onChange={() => toggleGoalMilestone(g.id, m.id)} 
+                              className="milestone-checkbox"
+                            />
+                            <span className="milestone-text">{m.text}</span>
+                            <button onClick={() => deleteGoalMilestone(g.id, m.id)} className="btn-remove-milestone">✕</button>
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      <div className="add-milestone-form">
+                        <input 
+                          type="text" 
+                          value={newMilestoneText[g.id] || ''}
+                          onChange={e => setNewMilestoneText(prev => ({ ...prev, [g.id]: e.target.value }))}
+                          placeholder="Add step..."
+                          className="glowing-input mini"
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone(g.id)}
+                        />
+                        <button onClick={() => handleAddMilestone(g.id)} className="btn-add-milestone">+</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="roadmap-section-wrapper">
+                      <RoadmapVisualizer 
+                        milestones={g.milestones || []} 
+                        goalTitle={g.title} 
+                        goalColor={g.type === 'Weekly' ? '#10b981' : g.type === 'Monthly' ? '#00e5ff' : '#8b5cf6'} 
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             ))
@@ -313,10 +338,35 @@ export default function Goals() {
           transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .goal-tabs {
+          display: flex;
+          gap: 12px;
+          margin-top: 16px;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 8px;
+        }
+        .goal-tab-btn {
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          padding: 4px 8px;
+          transition: 0.2s;
+        }
+        .goal-tab-btn:hover {
+          color: var(--text-primary);
+        }
+        .goal-tab-btn.active {
+          color: #8b5cf6;
+          border-bottom: 2px solid #8b5cf6;
+        }
+        .roadmap-section-wrapper {
+          margin-top: 12px;
+        }
         .milestones-section {
           margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px dashed var(--border-color);
         }
         .milestones-title {
           font-size: 0.8rem;

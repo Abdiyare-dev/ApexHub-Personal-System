@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import MoodCalendar from '@/components/journal/MoodCalendar';
+import MoodCalendar from '@/components/Journal/MoodCalendar';
 
 export default function Journal() {
   const [entries, setEntries] = useState([]);

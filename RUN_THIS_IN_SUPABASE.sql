@@ -27,20 +27,19 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS tasks          JSONB DEFAULT '[]':
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS specific_goals TEXT;
 
 -- ------------------------------------------------------ productivity_meta --
--- Small key/value store the UI uses for project types and similar lists.
+-- Persists custom project types. The shape matters: ProductivityContext reads
+-- `mData.project_types` and upserts with onConflict: 'user_id', so user_id has
+-- to be the primary key.
 CREATE TABLE IF NOT EXISTS productivity_meta (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  key        TEXT NOT NULL,
-  value      JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (user_id, key)
+  user_id       uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  project_types jsonb DEFAULT '[]'::jsonb,
+  updated_at    timestamptz DEFAULT now()
 );
 
 ALTER TABLE productivity_meta ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "own productivity_meta" ON productivity_meta;
-CREATE POLICY "own productivity_meta" ON productivity_meta
+DROP POLICY IF EXISTS "Users manage own productivity meta" ON productivity_meta;
+CREATE POLICY "Users manage own productivity meta" ON productivity_meta
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- ------------------------------------------------ refresh schema cache -----

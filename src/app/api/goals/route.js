@@ -109,7 +109,9 @@ export async function POST(request) {
       user_id: user.id,
       title,
       description: description || '',
-      category: category || 'General',
+      // goals_category_check only allows career/education/financial/health/
+      // personal/custom -- 'General' would be rejected.
+      category: category || 'personal',
       target_date: target_date || null,
       color: color || '#3B82F6',
       status: 'in_progress', // Default status

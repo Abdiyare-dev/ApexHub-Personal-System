@@ -1,63 +1,46 @@
 -- ============================================================================
--- RUN THIS ONCE IN THE SUPABASE SQL EDITOR
+-- STEP 2 -- RUN THIS ONCE IN THE SUPABASE SQL EDITOR
 --
---   Supabase dashboard -> SQL Editor -> New query -> paste all of this -> Run
+-- Fixes: new row for relation "tasks" violates check constraint
+--        "tasks_status_check"
 --
--- Fixes: "Could not find the 'goal_id' column of 'tasks' in the schema cache"
---        "Could not find the 'end_date' column of 'projects' in the schema cache"
+-- WHY: four different spellings of task status ended up in the codebase --
+-- 'Incomplete', 'Completed', 'Pending' and 'pending'. The UI reads only
+-- 'Incomplete' and 'Completed', so those become the canonical pair. The
+-- matching code fixes are in the same commit as this file.
 --
--- Every statement is idempotent. Running it twice changes nothing.
+-- ⚠ THIS ONE TOUCHES DATA. Unlike step 1, it rewrites the `status` value of
+-- existing task rows. It is a two-state collapse: anything that is not
+-- 'Completed' becomes 'Incomplete'. The UI already treats it that way
+-- (`t.status !== 'Completed'` is its definition of incomplete), so nothing
+-- the interface ever showed you is lost. Still -- look before you run:
+--
+--     SELECT status, count(*) FROM tasks GROUP BY status;
+--
 -- ============================================================================
 
--- ---------------------------------------------------------------- tasks ----
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS goal_id  UUID REFERENCES goals(id) ON DELETE SET NULL;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder BOOLEAN DEFAULT false;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS period   TEXT;
+-- Drop first, so the normalisation below cannot violate the old rule.
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_status_check;
 
--- ---------------------------------------------------------------- goals ----
-ALTER TABLE goals ADD COLUMN IF NOT EXISTS type       TEXT DEFAULT 'Yearly';
-ALTER TABLE goals ADD COLUMN IF NOT EXISTS milestones JSONB DEFAULT '[]'::jsonb;
+-- Fold every historical spelling of "done" into 'Completed' ...
+UPDATE tasks
+   SET status = 'Completed'
+ WHERE lower(status) IN ('completed', 'complete', 'done', 'finished');
 
--- ------------------------------------------------------------- projects ----
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type   TEXT;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS start_date     DATE;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS end_date       DATE;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_completed   BOOLEAN DEFAULT false;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS tasks          JSONB DEFAULT '[]'::jsonb;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS specific_goals TEXT;
+-- ... and everything else into 'Incomplete'.
+UPDATE tasks
+   SET status = 'Incomplete'
+ WHERE status IS NULL OR status <> 'Completed';
 
--- ------------------------------------------------------ productivity_meta --
--- Persists custom project types. The shape matters: ProductivityContext reads
--- `mData.project_types` and upserts with onConflict: 'user_id', so user_id has
--- to be the primary key.
-CREATE TABLE IF NOT EXISTS productivity_meta (
-  user_id       uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  project_types jsonb DEFAULT '[]'::jsonb,
-  updated_at    timestamptz DEFAULT now()
-);
+-- Now the constraint can be strict again.
+ALTER TABLE tasks ADD CONSTRAINT tasks_status_check
+  CHECK (status IN ('Incomplete', 'Completed'));
 
-ALTER TABLE productivity_meta ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ALTER COLUMN status SET DEFAULT 'Incomplete';
 
-DROP POLICY IF EXISTS "Users manage own productivity meta" ON productivity_meta;
-CREATE POLICY "Users manage own productivity meta" ON productivity_meta
-  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
--- ------------------------------------------------ refresh schema cache -----
--- PGRST204 is a *cache* error. Supabase normally reloads on its own, but
--- asking explicitly makes the fix take effect immediately.
 NOTIFY pgrst, 'reload schema';
 
 -- ============================================================================
--- VERIFY -- run this after the above and confirm you see the new columns:
+-- VERIFY -- expect only 'Incomplete' and/or 'Completed':
+--   SELECT status, count(*) FROM tasks GROUP BY status;
 -- ============================================================================
--- SELECT table_name, column_name
--- FROM information_schema.columns
--- WHERE table_schema = 'public'
---   AND table_name IN ('tasks','goals','projects')
---   AND column_name IN ('goal_id','reminder','period','type','milestones',
---                       'project_type','start_date','end_date','is_completed',
---                       'tasks','specific_goals')
--- ORDER BY table_name, column_name;
---
--- And check RLS is on everywhere:
--- SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';

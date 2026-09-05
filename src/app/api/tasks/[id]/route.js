@@ -15,10 +15,15 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const { status, text, due_date, goal_id, project_id, completed } = body;
 
-    // Normalizing status in case client sends 'completed' instead of 'Completed'
+    // 'Incomplete' and 'Completed' are the only values tasks_status_check
+    // accepts, so fold whatever the client sent into that pair.
     let finalStatus = status;
     if (completed !== undefined) {
-      finalStatus = completed ? 'Completed' : 'Pending';
+      finalStatus = completed ? 'Completed' : 'Incomplete';
+    } else if (typeof status === 'string') {
+      finalStatus = ['completed', 'complete', 'done'].includes(status.toLowerCase())
+        ? 'Completed'
+        : 'Incomplete';
     }
 
     const updates = {};

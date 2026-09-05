@@ -78,7 +78,7 @@ export async function POST(request) {
           recurrence_rule: recurrenceRule,
           category: entry.category || 'General',
           is_from_timetable: true,
-          status: 'pending',
+          status: 'Incomplete',
           priority: 'medium',
         });
         existingKeySet.add(taskKey);

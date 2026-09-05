@@ -170,6 +170,32 @@ export function ProductivityProvider({ children }) {
     };
   }, [user]);
 
+  // Helper to format date strings for Postgres (DATE column: YYYY-MM-DD, or null)
+  const sanitizeDateOnly = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return null;
+      return trimmed.split('T')[0];
+    }
+    return val;
+  };
+
+  // Helper to format timestamp strings for Postgres (TIMESTAMPTZ column, or null)
+  const sanitizeTimestamp = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return null;
+      try {
+        return new Date(trimmed).toISOString();
+      } catch {
+        return null;
+      }
+    }
+    return val;
+  };
+
   // ── TASK ACTIONS ─────────────────────────────────────────────────────────
   const addTask = async (t) => {
     if (!user) return;
@@ -180,8 +206,20 @@ export function ProductivityProvider({ children }) {
     }
     
     const dbTask = { ...t, user_id: getUserId(), created_at: new Date().toISOString() };
-    if (dbTask.dueDate !== undefined) { dbTask.due_date = dbTask.dueDate; delete dbTask.dueDate; }
-    if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
+    if (dbTask.dueDate !== undefined) {
+      dbTask.due_date = sanitizeTimestamp(dbTask.dueDate);
+      delete dbTask.dueDate;
+    }
+    if (dbTask.due_date !== undefined) {
+      dbTask.due_date = sanitizeTimestamp(dbTask.due_date);
+    }
+    if (dbTask.goalId !== undefined) {
+      dbTask.goal_id = dbTask.goalId || null;
+      delete dbTask.goalId;
+    }
+    if (!dbTask.status) {
+      dbTask.status = 'Incomplete';
+    }
     
     const { error } = await supabase.from('tasks').insert(dbTask);
     if (error) { console.warn('[productivity] add task failed:', formatError(error)); throw error; }
@@ -206,8 +244,17 @@ export function ProductivityProvider({ children }) {
     }
     
     const dbTask = { ...updatedTask };
-    if (dbTask.dueDate !== undefined) { dbTask.due_date = dbTask.dueDate; delete dbTask.dueDate; }
-    if (dbTask.goalId !== undefined) { dbTask.goal_id = dbTask.goalId; delete dbTask.goalId; }
+    if (dbTask.dueDate !== undefined) {
+      dbTask.due_date = sanitizeTimestamp(dbTask.dueDate);
+      delete dbTask.dueDate;
+    }
+    if (dbTask.due_date !== undefined) {
+      dbTask.due_date = sanitizeTimestamp(dbTask.due_date);
+    }
+    if (dbTask.goalId !== undefined) {
+      dbTask.goal_id = dbTask.goalId || null;
+      delete dbTask.goalId;
+    }
     
     await supabase.from('tasks').update(dbTask).eq('id', id);
     await refreshTasks();
@@ -233,9 +280,15 @@ export function ProductivityProvider({ children }) {
     }
     
     const dbGoal = { ...g, milestones: [], user_id: getUserId(), created_at: new Date().toISOString() };
-    if (dbGoal.targetDate !== undefined) { dbGoal.target_date = dbGoal.targetDate; delete dbGoal.targetDate; }
-    if (dbGoal.targetAmount !== undefined) { dbGoal.target_amount = dbGoal.targetAmount; delete dbGoal.targetAmount; }
-    if (dbGoal.currentAmount !== undefined) { dbGoal.current_amount = dbGoal.currentAmount; delete dbGoal.currentAmount; }
+    if (dbGoal.targetDate !== undefined) {
+      dbGoal.target_date = sanitizeDateOnly(dbGoal.targetDate);
+      delete dbGoal.targetDate;
+    }
+    if (dbGoal.target_date !== undefined) {
+      dbGoal.target_date = sanitizeDateOnly(dbGoal.target_date);
+    }
+    if (dbGoal.targetAmount !== undefined) { dbGoal.target_amount = Number(dbGoal.targetAmount) || 0; delete dbGoal.targetAmount; }
+    if (dbGoal.currentAmount !== undefined) { dbGoal.current_amount = Number(dbGoal.currentAmount) || 0; delete dbGoal.currentAmount; }
     
     const { error } = await supabase.from('goals').insert(dbGoal);
     if (error) { console.warn('[productivity] add goal failed:', formatError(error)); throw error; }
@@ -308,11 +361,26 @@ export function ProductivityProvider({ children }) {
     
     const dbProject = { ...p, tasks: [], is_completed: false, user_id: getUserId(), created_at: new Date().toISOString() };
     if (dbProject.name !== undefined) { dbProject.title = dbProject.name; delete dbProject.name; }
-    if (dbProject.endDate !== undefined) { dbProject.end_date = dbProject.endDate; delete dbProject.endDate; }
-    if (dbProject.specificGoals !== undefined) { dbProject.specific_goals = dbProject.specificGoals; delete dbProject.specificGoals; }
+    
+    const startVal = dbProject.startDate !== undefined ? dbProject.startDate : dbProject.start_date;
+    const dueVal = dbProject.dueDate !== undefined ? dbProject.dueDate : dbProject.due_date;
+    const endVal = dbProject.endDate !== undefined ? dbProject.endDate : (dbProject.end_date || dueVal);
+
+    dbProject.start_date = sanitizeDateOnly(startVal);
+    dbProject.due_date = sanitizeTimestamp(dueVal);
+    dbProject.end_date = sanitizeDateOnly(endVal);
+
+    delete dbProject.startDate;
+    delete dbProject.dueDate;
+    delete dbProject.endDate;
+
     if (dbProject.projectType !== undefined) { dbProject.project_type = dbProject.projectType; delete dbProject.projectType; }
-    if (dbProject.startDate !== undefined) { dbProject.start_date = dbProject.startDate; delete dbProject.startDate; }
-    if (dbProject.dueDate !== undefined) { dbProject.due_date = dbProject.dueDate; delete dbProject.dueDate; }
+    if (dbProject.specificGoals !== undefined) {
+      dbProject.specific_goals = Array.isArray(dbProject.specificGoals) || typeof dbProject.specificGoals === 'object'
+        ? JSON.stringify(dbProject.specificGoals)
+        : (dbProject.specificGoals || null);
+      delete dbProject.specificGoals;
+    }
     
     const { error } = await supabase.from('projects').insert(dbProject);
     if (error) { console.warn('[productivity] add project failed:', formatError(error)); throw error; }

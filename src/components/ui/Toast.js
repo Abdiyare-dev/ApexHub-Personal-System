@@ -73,7 +73,18 @@ function ToastItem({ toast, onDismiss }) {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
-  const showToast = useCallback((message, type = 'info') => {
+  const addToast = useCallback((optionsOrMessage, maybeType) => {
+    let message = ''
+    let type = 'info'
+
+    if (typeof optionsOrMessage === 'object' && optionsOrMessage !== null) {
+      message = optionsOrMessage.message || optionsOrMessage.title || ''
+      type = optionsOrMessage.type || 'info'
+    } else {
+      message = optionsOrMessage || ''
+      type = maybeType || 'info'
+    }
+
     const id = Date.now() + Math.random()
     setToasts((prev) => {
       // Only keep the 3 most recent
@@ -82,12 +93,14 @@ export function ToastProvider({ children }) {
     })
   }, [])
 
+  const showToast = addToast
+
   const dismiss = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, addToast, toast: addToast, dismiss }}>
       {children}
       {/* Toast Container */}
       <div className="fixed top-4 right-4 left-4 md:left-auto z-[9999] flex flex-col gap-2 items-end pointer-events-none">

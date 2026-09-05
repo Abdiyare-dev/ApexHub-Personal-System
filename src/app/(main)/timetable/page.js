@@ -16,7 +16,7 @@ const WEEK_DAYS = [
 ];
 
 const HOURS = Array.from({ length: 17 }, (_, i) => 6 + i); // 06:00 to 22:00
-const HOUR_HEIGHT = 56; // 56px per hour
+const HOUR_HEIGHT = 62; // 62px per hour for spacious fit
 const START_HOUR = 6;
 
 // Convert "HH:MM" to minutes from 06:00
@@ -30,11 +30,11 @@ function timeToOffsetMinutes(timeStr) {
 
 // Convert "HH:MM" start and end to height in pixels
 function calculateDurationHeight(startStr, endStr) {
-  if (!startStr || !endStr) return 38;
+  if (!startStr || !endStr) return 42;
   const [sh, sm] = startStr.split(':').map(Number);
   const [eh, em] = endStr.split(':').map(Number);
   const durationMins = Math.max(15, (eh * 60 + em) - (sh * 60 + sm));
-  return Math.max(28, (durationMins / 60) * HOUR_HEIGHT);
+  return Math.max(34, (durationMins / 60) * HOUR_HEIGHT);
 }
 
 // Map day string to 0-6 index (Sat=0..Fri=6)
@@ -856,14 +856,15 @@ export default function TimetablePage() {
           background: var(--surface);
           border: 1px solid var(--border-color);
           padding: 16px;
-          overflow: hidden;
+          overflow-x: auto;
           margin-bottom: 24px;
         }
 
         .grid-header-row {
           display: grid;
-          grid-template-columns: 64px repeat(7, 1fr);
-          gap: 6px;
+          grid-template-columns: 60px repeat(7, minmax(130px, 1fr));
+          gap: 8px;
+          min-width: 980px;
           padding-bottom: 12px;
           border-bottom: 1px solid var(--border-color);
         }
@@ -877,29 +878,34 @@ export default function TimetablePage() {
         }
         .day-header-cell {
           text-align: center;
-          padding: 6px;
-          border-radius: 10px;
+          padding: 8px 6px;
+          border-radius: 12px;
+          background: var(--surface-low);
+          border: 1px solid var(--border-color);
         }
         .day-header-cell.today-cell {
-          background: rgba(0, 153, 255, 0.1);
-          border: 1px solid var(--accent);
+          background: rgba(0, 153, 255, 0.12);
+          border: 1.5px solid var(--accent);
+          box-shadow: 0 0 12px rgba(0, 153, 255, 0.15);
         }
         .day-name {
-          font-size: 0.85rem;
+          font-size: 0.88rem;
           font-weight: 800;
           color: var(--text-primary);
         }
         .day-sub {
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           color: var(--text-muted);
+          margin-top: 2px;
         }
 
         .grid-calendar-body {
           display: grid;
-          grid-template-columns: 64px repeat(7, 1fr);
-          gap: 6px;
+          grid-template-columns: 60px repeat(7, minmax(130px, 1fr));
+          gap: 8px;
+          min-width: 980px;
           position: relative;
-          height: 560px;
+          height: 600px;
           overflow-y: auto;
           margin-top: 10px;
         }
@@ -912,7 +918,7 @@ export default function TimetablePage() {
           position: absolute;
           width: 100%;
           text-align: center;
-          font-size: 0.72rem;
+          font-size: 0.75rem;
           font-weight: 700;
           color: var(--text-muted);
         }
@@ -922,7 +928,7 @@ export default function TimetablePage() {
           height: ${HOURS.length * HOUR_HEIGHT}px;
           background: rgba(255, 255, 255, 0.015);
           border-left: 1px solid var(--border-color);
-          border-radius: 8px;
+          border-radius: 10px;
         }
 
         .hour-guideline {
@@ -935,34 +941,46 @@ export default function TimetablePage() {
 
         .entry-block {
           position: absolute;
-          left: 3px;
-          right: 3px;
-          border-radius: 8px;
-          padding: 6px 8px;
+          left: 4px;
+          right: 4px;
+          border-radius: 10px;
+          padding: 6px 10px;
           border: 1px solid;
+          border-left-width: 4px;
           cursor: pointer;
           overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
           transition: transform 0.15s ease, box-shadow 0.15s ease;
-          backdrop-filter: blur(4px);
+          backdrop-filter: blur(8px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .entry-block:hover {
-          transform: scale(1.02);
+          transform: translateY(-2px) scale(1.02);
           z-index: 10;
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
         }
         .block-title {
-          font-size: 0.78rem;
-          font-weight: 800;
+          font-size: 0.82rem;
+          font-weight: 700;
           color: var(--text-primary);
-          white-space: nowrap;
+          line-height: 1.25;
+          word-break: break-word;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
           overflow: hidden;
-          text-overflow: ellipsis;
         }
         .block-time {
-          font-size: 0.68rem;
+          font-size: 0.7rem;
           color: var(--text-secondary);
-          margin-top: 2px;
+          margin-top: 3px;
           font-weight: 600;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 4px;
         }
 
         /* Mobile View */

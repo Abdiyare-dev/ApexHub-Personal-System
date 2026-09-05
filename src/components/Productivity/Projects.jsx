@@ -34,6 +34,8 @@ export default function Projects() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const handleAddSpecificGoal = (e) => {
     e.preventDefault();
@@ -55,29 +57,35 @@ export default function Projects() {
     setShowNewTypeInput(false);
   };
 
-  const handleCreateProject = (e) => {
+  const handleCreateProject = async (e) => {
     e.preventDefault();
-    if (!name || !startDate || !dueDate) return;
-
-    addProject({
+    if (!name || !startDate || !dueDate || saving) return;
+    setSaveError('');
+    setSaving(true);
+    try {
+      await addProject({
       name,
       description,
       startDate,
       endDate,
       dueDate,
       projectType: type,
-      specificGoals
-    });
-
-    // Reset
-    setName('');
-    setDescription('');
-    setStartDate('');
-    setEndDate('');
-    setDueDate('');
-    setType(projectTypes[0]);
-    setSpecificGoals([]);
-    setIsModalOpen(false); // Close Modal on success
+        specificGoals
+      });
+      // Only discard what the user typed once the write actually succeeded.
+      setName('');
+      setDescription('');
+      setStartDate('');
+      setEndDate('');
+      setDueDate('');
+      setType(projectTypes[0]);
+      setSpecificGoals([]);
+      setIsModalOpen(false);
+    } catch (err) {
+      setSaveError(err?.message || 'Could not save this project. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddInternalTask = (e, projectId) => {
@@ -317,7 +325,8 @@ export default function Projects() {
             )}
           </div>
 
-          <button type="submit" className="btn-submit project-gradient">Launch Project</button>
+          {saveError && <p className="form-error">{saveError}</p>}
+          <button type="submit" className="btn-submit project-gradient" disabled={saving}>{saving ? 'Saving…' : 'Launch Project'}</button>
         </form>
       </Modal>
 
@@ -378,6 +387,8 @@ export default function Projects() {
         .sg-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; }
         .sg-remove:hover { color: var(--accent-danger); }
 
+        .form-error { margin: 10px 0 0; padding: 10px 14px; border-radius: 10px; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35); color: #fda4af; font-size: 0.85rem; line-height: 1.45; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-submit { padding: 12px; border-radius: 8px; border: none; color: white; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .project-gradient { background: linear-gradient(135deg, var(--accent-start), #0284c7); box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3); }
         .btn-submit:hover { transform: translateY(-2px); filter: brightness(1.1); }

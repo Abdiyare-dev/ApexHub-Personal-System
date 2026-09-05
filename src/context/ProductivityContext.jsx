@@ -30,10 +30,12 @@ const normalizeGoal = (g) => ({
   targetAmount: g.target_amount ?? g.targetAmount ?? 0,
   currentAmount: g.current_amount ?? g.currentAmount ?? 0,
   milestones: g.milestones ?? [],
+  type: g.type ?? 'Yearly',
 });
 
 const normalizeProject = (p) => ({
   ...p,
+  name: p.name ?? p.title ?? 'Untitled project',
   projectType: p.project_type ?? p.projectType ?? p.type ?? null,
   startDate: p.start_date ?? p.startDate ?? null,
   dueDate: p.due_date ?? p.dueDate ?? null,
@@ -305,6 +307,9 @@ export function ProductivityProvider({ children }) {
     }
     
     const dbProject = { ...p, tasks: [], is_completed: false, user_id: getUserId(), created_at: new Date().toISOString() };
+    if (dbProject.name !== undefined) { dbProject.title = dbProject.name; delete dbProject.name; }
+    if (dbProject.endDate !== undefined) { dbProject.end_date = dbProject.endDate; delete dbProject.endDate; }
+    if (dbProject.specificGoals !== undefined) { dbProject.specific_goals = dbProject.specificGoals; delete dbProject.specificGoals; }
     if (dbProject.projectType !== undefined) { dbProject.project_type = dbProject.projectType; delete dbProject.projectType; }
     if (dbProject.startDate !== undefined) { dbProject.start_date = dbProject.startDate; delete dbProject.startDate; }
     if (dbProject.dueDate !== undefined) { dbProject.due_date = dbProject.dueDate; delete dbProject.dueDate; }

@@ -229,26 +229,37 @@ export default function Tasks() {
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleCreateTask = (e) => {
+  const handleCreateTask = async (e) => {
     e.preventDefault();
-    if (!title) return;
-    addTask({
-      title,
-      description,
-      dueDate,
-      reminder,
-      period,
-      goalId: goalId === '' ? null : parseInt(goalId),
-      status: 'Incomplete'
-    });
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setReminder(false);
-    setPeriod('None');
-    setGoalId('');
-    setIsModalOpen(false); // Close modal on creation
+    if (!title || saving) return;
+    setSaveError('');
+    setSaving(true);
+    try {
+      await addTask({
+        title,
+        description,
+        dueDate,
+        reminder,
+        period,
+        goalId: goalId === '' ? null : goalId, // uuid — never parseInt this
+        status: 'Incomplete'
+      });
+      // Only discard what the user typed once the write actually succeeded.
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+      setReminder(false);
+      setPeriod('None');
+      setGoalId('');
+      setIsModalOpen(false);
+    } catch (err) {
+      setSaveError(err?.message || 'Could not save this task. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleTaskStatus = (task) => {
@@ -375,7 +386,10 @@ export default function Tasks() {
               Set Reminder
             </label>
           </div>
-          <button type="submit" className="btn-submit primary-gradient" style={{marginTop: '10px'}}>Add Task</button>
+          {saveError && <p className="form-error">{saveError}</p>}
+          <button type="submit" className="btn-submit primary-gradient" style={{marginTop: '10px'}} disabled={saving}>
+            {saving ? 'Saving…' : 'Add Task'}
+          </button>
         </form>
       </Modal>
 
@@ -433,6 +447,17 @@ export default function Tasks() {
         }
         .glowing-input:focus { border-color: var(--accent-start); box-shadow: 0 0 10px rgba(0,229,255,0.15); outline: none; }
         .textarea { resize: vertical; }
+        .form-error {
+          margin: 10px 0 0;
+          padding: 10px 14px;
+          border-radius: 10px;
+          background: rgba(244, 63, 94, 0.12);
+          border: 1px solid rgba(244, 63, 94, 0.35);
+          color: #fda4af;
+          font-size: 0.85rem;
+          line-height: 1.45;
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-submit {
           padding: 12px; border-radius: 8px; border: none; color: white; font-weight: 600; cursor: pointer;
           background: linear-gradient(135deg, var(--accent-start), #0284c7); transition: 0.2s;

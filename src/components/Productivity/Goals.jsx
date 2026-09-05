@@ -14,14 +14,24 @@ export default function Goals() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleCreateGoal = (e) => {
+  const handleCreateGoal = async (e) => {
     e.preventDefault();
-    if (!title) return;
-    addGoal({ title, type });
-    setTitle('');
-    setType('Yearly');
-    setIsModalOpen(false); // Close Modal on success
+    if (!title || saving) return;
+    setSaveError('');
+    setSaving(true);
+    try {
+      await addGoal({ title, type });
+      setTitle('');
+      setType('Yearly');
+      setIsModalOpen(false);
+    } catch (err) {
+      setSaveError(err?.message || 'Could not save this goal. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddMilestone = (goalId) => {
@@ -58,7 +68,7 @@ export default function Goals() {
               <div key={g.id} className="goal-card">
                 <div className="goal-header">
                   <div>
-                    <span className={`goal-badge ${g.type.toLowerCase()}`}>{g.type}</span>
+                    <span className={`goal-badge ${(g.type || 'yearly').toLowerCase()}`}>{g.type || 'Yearly'}</span>
                     <h4 className="goal-title">{g.title}</h4>
                   </div>
                   <button onClick={() => deleteGoal(g.id)} className="btn-delete">✕</button>
@@ -139,7 +149,8 @@ export default function Goals() {
             </select>
           </div>
 
-          <button type="submit" className="btn-submit goals-gradient">Set New Goal</button>
+          {saveError && <p className="form-error">{saveError}</p>}
+          <button type="submit" className="btn-submit goals-gradient" disabled={saving}>{saving ? 'Saving…' : 'Set New Goal'}</button>
         </form>
       </Modal>
 
@@ -189,6 +200,8 @@ export default function Goals() {
           border-color: #8b5cf6;
           box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
+        .form-error { margin: 10px 0 0; padding: 10px 14px; border-radius: 10px; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35); color: #fda4af; font-size: 0.85rem; line-height: 1.45; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-submit {
           padding: 14px;
           border-radius: 8px;

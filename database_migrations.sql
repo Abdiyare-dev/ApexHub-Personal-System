@@ -259,3 +259,42 @@ CREATE POLICY "Users manage own productivity meta" ON productivity_meta
 -- have no CREATE TABLE here — they were created outside this file. Verify their
 -- RLS is enabled and scoped to auth.uid() = user_id, e.g.:
 --   SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+
+-- ============================================================================
+-- SCHEMA RECONCILIATION  (run this in the Supabase SQL editor)
+--
+-- The Productivity module writes fields that do not exist on the live tables,
+-- so every create silently failed. The first symptom was:
+--   "Could not find the 'goal_id' column of 'tasks' in the schema cache"
+-- but a column-by-column probe showed the same problem across tasks, goals
+-- and projects.
+--
+-- Safe to re-run: every statement uses IF NOT EXISTS.
+-- ============================================================================
+
+-- tasks: the create-task form sends a linked goal, a reminder flag and a
+-- recurrence period; none of those columns existed.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS goal_id  UUID REFERENCES goals(id) ON DELETE SET NULL;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder BOOLEAN DEFAULT false;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS period   TEXT;
+
+-- goals: the UI stores a timeframe ("Yearly"/"Monthly"/"Weekly") and keeps
+-- milestones inline as JSON. Note this is deliberately NOT the separate
+-- `milestones` table — nothing in the UI reads that table, only the unused
+-- /api/goals/[id]/milestones routes do.
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS type       TEXT DEFAULT 'Yearly';
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS milestones JSONB DEFAULT '[]'::jsonb;
+
+-- projects: the form collects a type, a date range, completion state, an
+-- inline task list and free-text goals.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type   TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS start_date     DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS end_date       DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_completed   BOOLEAN DEFAULT false;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS tasks          JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS specific_goals TEXT;
+
+-- Verify afterwards:
+--   SELECT table_name, column_name FROM information_schema.columns
+--   WHERE table_schema = 'public' AND table_name IN ('tasks','goals','projects')
+--   ORDER BY table_name, column_name;

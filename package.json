@@ -9,6 +9,10 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "allowScripts": {
+    "core-js": true,
+    "unrs-resolver": true
+  },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.104.0",

@@ -765,54 +765,6 @@ export default function Projects() {
                             📊 Open Details & Roadmap →
                           </button>
                         </div>
-
-                        {/* Nested Checklist */}
-                        <div className="pc-tasks-section">
-                          <div className="pc-tasks-header">
-                            <span className="pct-title">PROJECT CHECKLIST</span>
-                            <span className="pct-counter">{completedTasks}/{totalTasks}</span>
-                          </div>
-
-                          <div className="pc-tasks-list">
-                            {(p.tasks || []).map(t => (
-                              <div key={t.id} className={`pc-task-item ${t.completed ? 'completed' : ''}`}>
-                                <div 
-                                  className={`pc-task-check ${t.completed ? 'checked' : ''}`}
-                                  onClick={() => toggleProjectTask(p.id, t.id)}
-                                >
-                                  {t.completed && (
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                  )}
-                                </div>
-                                <div className="pc-task-text-group">
-                                  {t.category === 'goal' && <span className="category-micro-badge goal">🎯 Goal</span>}
-                                  <span className="pc-task-text">{t.text}</span>
-                                </div>
-                                <button onClick={() => deleteProjectTask(p.id, t.id)} className="btn-del-task">✕</button>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Add Sub-Task Quick Form */}
-                          <form onSubmit={(e) => handleAddInternalTask(e, p.id)} className="pc-add-task-form">
-                            <select 
-                              value={newTaskCategory[p.id] || 'normal'}
-                              onChange={(e) => setNewTaskCategory(prev => ({ ...prev, [p.id]: e.target.value }))}
-                              className="pc-cat-select"
-                            >
-                              <option value="normal">⚡ Task</option>
-                              <option value="goal">🎯 Goal</option>
-                            </select>
-                            <input 
-                              type="text"
-                              placeholder="+ Add task step & press Enter..."
-                              value={newTaskInput[p.id] || ''}
-                              onChange={(e) => setNewTaskInput(prev => ({ ...prev, [p.id]: e.target.value }))}
-                              className="pc-add-task-input"
-                            />
-                            <button type="submit" className="pc-btn-add-task">+</button>
-                          </form>
-                        </div>
                       </div>
                     );
                   })

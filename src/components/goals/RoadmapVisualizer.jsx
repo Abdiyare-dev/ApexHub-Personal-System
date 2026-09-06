@@ -159,7 +159,7 @@ export default function RoadmapVisualizer({ milestones = [], goalColor = '#8b5cf
             <path
               d={lockedPath}
               fill="none"
-              stroke="#e2e8f0"
+              stroke="var(--border-color, rgba(148, 163, 184, 0.3))"
               strokeWidth="3"
               strokeDasharray="6 6"
               strokeLinecap="round"
@@ -188,12 +188,12 @@ export default function RoadmapVisualizer({ milestones = [], goalColor = '#8b5cf
                 onMouseLeave={() => setHoveredNode(null)}
               >
                 {/* Background shadow/glow */}
-                <circle cx={pos.x} cy={pos.y} r="22" fill={isCompleted ? '#d1fae5' : isActive ? `${goalColor}20` : '#f1f5f9'} />
+                <circle cx={pos.x} cy={pos.y} r="22" fill={isCompleted ? 'rgba(16, 185, 129, 0.2)' : isActive ? `${goalColor}25` : 'rgba(148, 163, 184, 0.12)'} />
                 
                 {/* Main Node Shape */}
                 <circle 
                   cx={pos.x} cy={pos.y} r="16" 
-                  fill={isCompleted ? '#10b981' : isActive ? goalColor : '#cbd5e1'}
+                  fill={isCompleted ? '#10b981' : isActive ? goalColor : 'var(--surface-high, #64748b)'}
                   className={isActive ? 'pulse-node' : ''}
                   style={{ transformOrigin: `${pos.x}px ${pos.y}px` }}
                 />

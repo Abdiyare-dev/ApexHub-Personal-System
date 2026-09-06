@@ -157,67 +157,98 @@ export default function Goals() {
               onAction={() => setIsModalOpen(true)}
             />
           ) : (
-            goals.map(g => (
+            goals.map(g => {
+              const totalMilestones = g.milestones?.length || 0;
+              const completedMilestones = (g.milestones || []).filter(m => m.completed).length;
+              const activeTab = activeTabMap[g.id] || 'milestones';
+
+              return (
               <div key={g.id} className="goal-card">
                 <div className="goal-header">
-                  <div>
+                  <div className="goal-title-group">
                     <span className={`goal-badge ${(g.type || 'yearly').toLowerCase()}`}>{g.type || 'Yearly'}</span>
                     <h4 className="goal-title">{g.title}</h4>
                   </div>
-                  <button onClick={() => deleteGoal(g.id)} className="btn-delete">✕</button>
+                  <button onClick={() => deleteGoal(g.id)} className="btn-delete" title="Delete goal">✕</button>
                 </div>
                 
                 <div className="goal-progress-section">
                   <div className="progress-labels">
-                    <span>Progress</span>
-                    <span>{g.completionRate}%</span>
+                    <span className="progress-subtext">
+                      <strong>{completedMilestones}</strong> of {totalMilestones} steps completed
+                    </span>
+                    <span className="progress-pill-badge">{g.completionRate}%</span>
                   </div>
                   <div className="progress-bar-bg">
                     <div className="progress-bar-fill" style={{ width: `${g.completionRate}%` }}></div>
                   </div>
                   
-                  <div className="goal-tabs">
+                  {/* Goal Card Tabs Switcher */}
+                  <div className="goal-segmented-tabs">
                     <button 
-                      className={`goal-tab-btn ${(activeTabMap[g.id] || 'milestones') === 'milestones' ? 'active' : ''}`}
+                      className={`goal-tab-pill ${activeTab === 'milestones' ? 'active' : ''}`}
                       onClick={() => setActiveTabMap(prev => ({ ...prev, [g.id]: 'milestones' }))}
                     >
-                      Milestones
+                      <span className="tab-pill-icon">📋</span>
+                      <span>Milestones</span>
+                      <span className="tab-pill-count">{completedMilestones}/{totalMilestones}</span>
                     </button>
                     <button 
-                      className={`goal-tab-btn ${(activeTabMap[g.id] || 'milestones') === 'roadmap' ? 'active' : ''}`}
+                      className={`goal-tab-pill ${activeTab === 'roadmap' ? 'active' : ''}`}
                       onClick={() => setActiveTabMap(prev => ({ ...prev, [g.id]: 'roadmap' }))}
                     >
-                      Roadmap Visualizer
+                      <span className="tab-pill-icon">🗺️</span>
+                      <span>Roadmap Visualizer</span>
                     </button>
                   </div>
 
-                  {(activeTabMap[g.id] || 'milestones') === 'milestones' ? (
+                  {activeTab === 'milestones' ? (
                     <div className="milestones-section">
                       <ul className="milestone-list">
-                        {g.milestones?.map(m => (
-                          <li key={m.id} className={`milestone-item ${m.completed ? 'completed' : ''}`}>
-                            <input 
-                              type="checkbox" 
-                              checked={m.completed} 
-                              onChange={() => toggleGoalMilestone(g.id, m.id)} 
-                              className="milestone-checkbox"
-                            />
-                            <span className="milestone-text">{m.text}</span>
-                            <button onClick={() => deleteGoalMilestone(g.id, m.id)} className="btn-remove-milestone">✕</button>
-                          </li>
-                        ))}
+                        {totalMilestones === 0 ? (
+                          <div className="empty-milestones-prompt">
+                            <span>No milestone steps added yet. Add your first step below!</span>
+                          </div>
+                        ) : (
+                          g.milestones?.map((m, idx) => (
+                            <li key={m.id} className={`milestone-item ${m.completed ? 'completed' : ''}`}>
+                              <button
+                                type="button"
+                                className={`custom-milestone-checkbox ${m.completed ? 'checked' : ''}`}
+                                onClick={() => toggleGoalMilestone(g.id, m.id)}
+                                aria-label={m.completed ? "Mark step incomplete" : "Mark step complete"}
+                              >
+                                {m.completed ? (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                ) : (
+                                  <span className="checkbox-inner-circle" />
+                                )}
+                              </button>
+                              <span className="step-num-badge">{String(idx + 1).padStart(2, '0')}</span>
+                              <span className="milestone-text">{m.text}</span>
+                              <button onClick={() => deleteGoalMilestone(g.id, m.id)} className="btn-remove-milestone" title="Delete step">✕</button>
+                            </li>
+                          ))
+                        )}
                       </ul>
                       
                       <div className="add-milestone-form">
-                        <input 
-                          type="text" 
-                          value={newMilestoneText[g.id] || ''}
-                          onChange={e => setNewMilestoneText(prev => ({ ...prev, [g.id]: e.target.value }))}
-                          placeholder="Add step..."
-                          className="glowing-input mini"
-                          onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone(g.id)}
-                        />
-                        <button onClick={() => handleAddMilestone(g.id)} className="btn-add-milestone">+</button>
+                        <div className="add-input-wrapper">
+                          <span className="add-input-icon">+</span>
+                          <input 
+                            type="text" 
+                            value={newMilestoneText[g.id] || ''}
+                            onChange={e => setNewMilestoneText(prev => ({ ...prev, [g.id]: e.target.value }))}
+                            placeholder="Add next milestone step..."
+                            className="add-milestone-input"
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone(g.id)}
+                          />
+                        </div>
+                        <button onClick={() => handleAddMilestone(g.id)} className="btn-add-milestone">
+                          Add Step
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -231,7 +262,8 @@ export default function Goals() {
                   )}
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
         )}
@@ -392,142 +424,304 @@ export default function Goals() {
         .goal-badge.monthly { background: rgba(0, 229, 255, 0.2); color: #67e8f9; }
         .goal-badge.weekly { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
         
+        .goal-title-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
         .goal-title {
-          font-size: 1.1rem;
+          font-size: 1.15rem;
+          font-weight: 700;
           color: var(--text-primary);
+          margin: 0;
+          letter-spacing: -0.01em;
         }
         .btn-delete {
           background: transparent;
           border: none;
           color: var(--text-muted);
           cursor: pointer;
-          font-size: 1.2rem;
+          font-size: 1.1rem;
+          padding: 4px;
+          border-radius: 6px;
           transition: 0.2s;
         }
         .btn-delete:hover {
           color: var(--accent-danger);
+          background: rgba(239, 68, 68, 0.1);
         }
         
         .goal-progress-section {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
           position: relative;
         }
         .progress-labels {
           display: flex;
           justify-content: space-between;
+          align-items: center;
           font-size: 0.85rem;
+        }
+        .progress-subtext {
           color: var(--text-secondary);
+          font-size: 0.8rem;
+        }
+        .progress-subtext strong {
+          color: var(--text-primary);
+          font-weight: 700;
+        }
+        .progress-pill-badge {
+          font-size: 0.75rem;
+          font-weight: 800;
+          padding: 2px 8px;
+          border-radius: 12px;
+          background: rgba(139, 92, 246, 0.15);
+          color: #a78bfa;
         }
         
         .progress-bar-bg {
           width: 100%;
           height: 8px;
           background: var(--surface-low);
-          border-radius: 4px;
+          border-radius: 999px;
           overflow: hidden;
           position: relative;
-          z-index: 1;
         }
         .progress-bar-fill {
           height: 100%;
           background: linear-gradient(90deg, #8b5cf6, #00e5ff);
-          border-radius: 4px;
-          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 999px;
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+          transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .goal-tabs {
+        /* Segmented Pill Tabs for Goal Card */
+        .goal-segmented-tabs {
           display: flex;
-          gap: 12px;
-          margin-top: 16px;
-          border-bottom: 1px solid var(--border-color);
-          padding-bottom: 8px;
+          gap: 6px;
+          margin-top: 14px;
+          background: var(--surface-low);
+          padding: 4px;
+          border-radius: 10px;
+          border: 1px solid var(--border-color);
         }
-        .goal-tab-btn {
-          background: none;
+        .goal-tab-pill {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          background: transparent;
           border: none;
           color: var(--text-secondary);
           font-weight: 600;
-          font-size: 0.85rem;
+          font-size: 0.82rem;
           cursor: pointer;
-          padding: 4px 8px;
+          padding: 7px 10px;
+          border-radius: 7px;
           transition: 0.2s;
         }
-        .goal-tab-btn:hover {
+        .goal-tab-pill:hover {
           color: var(--text-primary);
         }
-        .goal-tab-btn.active {
+        .goal-tab-pill.active {
+          background: var(--surface);
           color: #8b5cf6;
-          border-bottom: 2px solid #8b5cf6;
+          font-weight: 700;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
+        .tab-pill-icon {
+          font-size: 0.85rem;
+        }
+        .tab-pill-count {
+          font-size: 0.72rem;
+          background: rgba(139, 92, 246, 0.15);
+          color: #a78bfa;
+          padding: 1px 6px;
+          border-radius: 10px;
+          font-weight: 700;
+        }
+
         .roadmap-section-wrapper {
-          margin-top: 12px;
+          margin-top: 14px;
         }
         .milestones-section {
-          margin-top: 12px;
-        }
-        .milestones-title {
-          font-size: 0.8rem;
-          color: var(--text-secondary);
-          display: block;
-          margin-bottom: 8px;
+          margin-top: 14px;
         }
         .milestone-list {
           list-style: none;
           padding: 0;
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          margin-bottom: 12px;
+          gap: 8px;
+          margin-bottom: 14px;
         }
+        .empty-milestones-prompt {
+          padding: 16px;
+          text-align: center;
+          font-size: 0.82rem;
+          color: var(--text-muted);
+          border: 1px dashed var(--border-color);
+          border-radius: 8px;
+        }
+        
+        /* Modern Milestone Item */
         .milestone-item {
           display: flex;
           align-items: center;
-          gap: 8px;
-          font-size: 0.85rem;
+          gap: 10px;
+          font-size: 0.88rem;
           background: var(--surface-low);
-          padding: 6px 10px;
-          border-radius: 6px;
+          border: 1px solid var(--border-color);
+          padding: 8px 12px;
+          border-radius: 10px;
+          transition: 0.2s;
+        }
+        .milestone-item:hover {
+          border-color: rgba(139, 92, 246, 0.35);
+          transform: translateX(2px);
+        }
+        .milestone-item.completed {
+          background: rgba(16, 185, 129, 0.05);
+          border-color: rgba(16, 185, 129, 0.2);
         }
         .milestone-item.completed .milestone-text {
           text-decoration: line-through;
           color: var(--text-muted);
         }
-        .milestone-checkbox {
+
+        /* Custom Checkbox */
+        .custom-milestone-checkbox {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          border: 2px solid var(--border-color);
+          background: transparent;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           cursor: pointer;
+          padding: 0;
+          flex-shrink: 0;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .custom-milestone-checkbox:hover {
+          border-color: #8b5cf6;
+          box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+          transform: scale(1.08);
+        }
+        .custom-milestone-checkbox.checked {
+          background: linear-gradient(135deg, #10b981, #059669);
+          border-color: #10b981;
+          color: white;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+        }
+        .checkbox-inner-circle {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: transparent;
+          transition: 0.2s;
+        }
+        .custom-milestone-checkbox:hover .checkbox-inner-circle {
+          background: #8b5cf6;
+        }
+
+        /* Step Badge */
+        .step-num-badge {
+          font-size: 0.7rem;
+          font-weight: 800;
+          color: var(--text-muted);
+          background: var(--surface);
+          padding: 2px 6px;
+          border-radius: 6px;
+          border: 1px solid var(--border-color);
+          font-family: monospace;
+          letter-spacing: 0.5px;
+        }
+
         .milestone-text {
           flex: 1;
           color: var(--text-primary);
+          font-weight: 500;
+          line-height: 1.35;
+          word-break: break-word;
         }
         .btn-remove-milestone {
           background: none;
           border: none;
           color: var(--text-muted);
           cursor: pointer;
+          font-size: 0.8rem;
+          padding: 4px;
+          border-radius: 4px;
+          opacity: 0.4;
+          transition: 0.2s;
         }
-        .btn-remove-milestone:hover { color: var(--accent-danger); }
+        .milestone-item:hover .btn-remove-milestone {
+          opacity: 1;
+        }
+        .btn-remove-milestone:hover { 
+          color: var(--accent-danger); 
+          background: rgba(239, 68, 68, 0.1);
+        }
 
+        /* Add Milestone Form */
         .add-milestone-form {
           display: flex;
           gap: 8px;
         }
-        .glowing-input.mini {
-          padding: 6px 10px;
-          font-size: 0.8rem;
-        }
-        .btn-add-milestone {
-          background: rgba(139, 92, 246, 0.2);
-          color: #a78bfa;
-          border: none;
-          border-radius: 6px;
-          padding: 0 12px;
-          cursor: pointer;
-          font-weight: bold;
+        .add-input-wrapper {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          background: var(--surface-low);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 0 10px;
           transition: 0.2s;
         }
-        .btn-add-milestone:hover { background: #8b5cf6; color: #fff; }
+        .add-input-wrapper:focus-within {
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+        }
+        .add-input-icon {
+          color: var(--text-muted);
+          font-weight: bold;
+          font-size: 1rem;
+          margin-right: 6px;
+        }
+        .add-milestone-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          color: var(--text-primary);
+          font-size: 0.85rem;
+          padding: 8px 0;
+          outline: none;
+        }
+        .add-milestone-input::placeholder {
+          color: var(--text-muted);
+          font-size: 0.82rem;
+        }
+        .btn-add-milestone {
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          padding: 0 14px;
+          cursor: pointer;
+          font-weight: 700;
+          font-size: 0.82rem;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+          transition: 0.2s;
+        }
+        .btn-add-milestone:hover { 
+          filter: brightness(1.1);
+          transform: translateY(-1px);
+        }
 
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn {
@@ -539,3 +733,4 @@ export default function Goals() {
     </div>
   );
 }
+

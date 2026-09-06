@@ -13,10 +13,18 @@ export default function Projects() {
     projectTypes = [], addProjectType
   } = useProductivity();
 
-  // View state
+  // Portfolio View State
   const [mainView, setMainView] = useState('list'); // 'list' | 'roadmap'
   const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [termFilter, setTermFilter] = useState('all'); // 'all' | 'short-term' | 'long-term'
+
+  // Dedicated Project Detail View State
+  const [activeProjectId, setActiveProjectId] = useState(null);
+  const [detailTab, setDetailTab] = useState('roadmap'); // 'roadmap' | 'performance' | 'tasks'
+  const [detailRoadmapFilter, setDetailRoadmapFilter] = useState('goals'); // 'goals' | 'all'
+  const [detailTaskFilter, setDetailTaskFilter] = useState('all'); // 'all' | 'goals' | 'normal'
+  const [detailNewTaskText, setDetailNewTaskText] = useState('');
+  const [detailNewTaskCategory, setDetailNewTaskCategory] = useState('goal'); // 'goal' | 'normal'
 
   // Create Project Form State
   const [name, setName] = useState('');
@@ -39,12 +47,6 @@ export default function Projects() {
   const [editStartDate, setEditStartDate] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // Details & Performance Modal State
-  const [activeDetailsProject, setActiveDetailsProject] = useState(null);
-  const [detailsSubTaskFilter, setDetailsSubTaskFilter] = useState('all'); // 'all' | 'goals' | 'normal'
-  const [detailsNewTaskText, setDetailsNewTaskText] = useState('');
-  const [detailsNewTaskCategory, setDetailsNewTaskCategory] = useState('normal'); // 'normal' | 'goal'
 
   // Create Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,14 +138,14 @@ export default function Projects() {
     setNewTaskInput(prev => ({ ...prev, [projectId]: '' }));
   };
 
-  const handleAddDetailsTask = (e) => {
+  const handleAddDetailTask = (e, projectId) => {
     e.preventDefault();
-    if (!activeDetailsProject || !detailsNewTaskText.trim()) return;
-    addProjectTask(activeDetailsProject.id, { 
-      text: detailsNewTaskText.trim(), 
-      category: detailsNewTaskCategory 
+    if (!detailNewTaskText.trim()) return;
+    addProjectTask(projectId, {
+      text: detailNewTaskText.trim(),
+      category: detailNewTaskCategory
     });
-    setDetailsNewTaskText('');
+    setDetailNewTaskText('');
   };
 
   const getProjectStatus = (project) => {
@@ -160,7 +162,7 @@ export default function Projects() {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Filter projects based on Horizon / Term
+  // Filter projects by Horizon
   const filteredProjects = useMemo(() => {
     if (termFilter === 'all') return projects;
     return projects.filter(p => (p.term || 'short-term') === termFilter);
@@ -169,8 +171,40 @@ export default function Projects() {
   const shortTermCount = useMemo(() => projects.filter(p => (p.term || 'short-term') === 'short-term').length, [projects]);
   const longTermCount = useMemo(() => projects.filter(p => p.term === 'long-term').length, [projects]);
 
-  // Compute Project Roadmap Milestones
-  const roadmapMilestones = useMemo(() => {
+  // Active Project for Detail View
+  const activeProject = useMemo(() => {
+    if (!activeProjectId) return null;
+    return projects.find(p => p.id === activeProjectId) || null;
+  }, [projects, activeProjectId]);
+
+  // Compute Active Project Specific Roadmap Steps (Milestones)
+  const activeProjectRoadmapSteps = useMemo(() => {
+    if (!activeProject) return [];
+    const tasks = activeProject.tasks || [];
+    
+    // Filter tasks based on detail roadmap filter (Goals only vs All)
+    const filtered = detailRoadmapFilter === 'goals' 
+      ? tasks.filter(t => t.category === 'goal')
+      : tasks;
+
+    if (filtered.length === 0) {
+      return [
+        { id: `${activeProject.id}-start`, text: `🚀 ${activeProject.name} (Kickoff)`, state: 'completed', step: 1 },
+        { id: `${activeProject.id}-finish`, text: `🏆 Project Final Delivery`, state: activeProject.isCompleted ? 'completed' : 'active', step: 2 }
+      ];
+    }
+
+    return filtered.map((t, idx) => ({
+      id: t.id,
+      text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
+      state: t.completed ? 'completed' : 'locked',
+      step: idx + 1,
+      type: t.category === 'goal' ? 'goal' : 'task'
+    }));
+  }, [activeProject, detailRoadmapFilter]);
+
+  // General Portfolio Roadmap Milestones
+  const portfolioRoadmapMilestones = useMemo(() => {
     if (selectedProjectId === 'all') {
       return filteredProjects.map((p, idx) => {
         const tasksCount = p.tasks?.length || 0;
@@ -186,17 +220,15 @@ export default function Projects() {
       });
     }
 
-    const currentProject = projects.find(p => p.id === selectedProjectId);
-    if (!currentProject) return [];
-
-    const tasks = currentProject.tasks || [];
+    const curr = projects.find(p => p.id === selectedProjectId);
+    if (!curr) return [];
+    const tasks = curr.tasks || [];
     if (tasks.length === 0) {
       return [
-        { id: `${currentProject.id}-start`, text: `${currentProject.name} (Started)`, state: 'completed', step: 1 },
-        { id: `${currentProject.id}-finish`, text: `${currentProject.name} (Delivery)`, state: currentProject.isCompleted ? 'completed' : 'active', step: 2 }
+        { id: `${curr.id}-start`, text: `${curr.name} (Started)`, state: 'completed', step: 1 },
+        { id: `${curr.id}-finish`, text: `${curr.name} (Delivery)`, state: curr.isCompleted ? 'completed' : 'active', step: 2 }
       ];
     }
-
     return tasks.map((t, idx) => ({
       id: t.id,
       text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
@@ -206,12 +238,700 @@ export default function Projects() {
     }));
   }, [filteredProjects, projects, selectedProjectId]);
 
-  // Sync active details project with latest state
-  const currentDetailsProject = useMemo(() => {
-    if (!activeDetailsProject) return null;
-    return projects.find(p => p.id === activeDetailsProject.id) || activeDetailsProject;
-  }, [projects, activeDetailsProject]);
+  // =========================================================================
+  // VIEW: DEDICATED PROJECT DETAILS PAGE
+  // =========================================================================
+  if (activeProject) {
+    const status = getProjectStatus(activeProject);
+    const totalTasks = (activeProject.tasks || []).length;
+    const completedTasks = (activeProject.tasks || []).filter(t => t.completed).length;
+    const progressPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (activeProject.isCompleted ? 100 : 0);
+    const isLongTerm = activeProject.term === 'long-term';
+    
+    const goalTasks = (activeProject.tasks || []).filter(t => t.category === 'goal');
+    const normalTasks = (activeProject.tasks || []).filter(t => t.category !== 'goal');
+    const completedGoals = goalTasks.filter(t => t.completed).length;
+    const completedNormals = normalTasks.filter(t => t.completed).length;
 
+    const now = new Date();
+    const due = activeProject.dueDate ? new Date(activeProject.dueDate) : null;
+    const daysLeft = due ? Math.ceil((due - now) / (1000 * 60 * 60 * 24)) : null;
+
+    return (
+      <div className="module-container fade-in">
+        {/* Back Navigation Bar */}
+        <div className="detail-top-nav">
+          <button 
+            onClick={() => setActiveProjectId(null)} 
+            className="btn-back"
+          >
+            ← Back to Projects Portfolio
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button 
+              type="button"
+              className={`btn-complete-toggle ${activeProject.isCompleted ? 'is-done' : ''}`}
+              onClick={() => toggleProjectComplete(activeProject.id)}
+            >
+              <span className="chk-bubble">{activeProject.isCompleted ? '✓' : ''}</span>
+              <span className="chk-label">{activeProject.isCompleted ? 'Project Completed' : 'Mark Project Done'}</span>
+            </button>
+
+            <button onClick={(e) => handleOpenEdit(activeProject, e)} className="btn-action-icon edit" title="Edit Project">✏️</button>
+            <button onClick={() => { deleteProject(activeProject.id); setActiveProjectId(null); }} className="btn-action-icon delete" title="Delete Project">🗑️</button>
+          </div>
+        </div>
+
+        {/* Project Header Banner */}
+        <div className="project-detail-hero">
+          <div className="hero-left">
+            <div className="tag-group">
+              <span className={`status-badge ${status.replace(' ', '-').toLowerCase()}`}>{status}</span>
+              <span className={`term-tag ${isLongTerm ? 'long' : 'short'}`}>
+                {isLongTerm ? '🏔️ Long-Term' : '⚡ Short-Term'}
+              </span>
+              {activeProject.projectType && <span className="pc-type">{activeProject.projectType}</span>}
+            </div>
+            <h1 className="project-detail-title">{activeProject.name}</h1>
+            {activeProject.description && (
+              <p className="project-detail-desc">{activeProject.description}</p>
+            )}
+          </div>
+
+          <div className="hero-right">
+            <div className="detail-date-card">
+              <div className="ddc-item">
+                <span className="ddc-lbl">START DATE</span>
+                <span className="ddc-val">📅 {formatDateTime(activeProject.startDate)}</span>
+              </div>
+              <div className="ddc-item highlight">
+                <span className="ddc-lbl">DEADLINE</span>
+                <span className="ddc-val">📅 {formatDateTime(activeProject.dueDate)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Switchers for Project Details */}
+        <div className="detail-tabs-bar">
+          <div className="segmented-control main-tabs">
+            <button 
+              className={`seg-btn ${detailTab === 'roadmap' ? 'active' : ''}`}
+              onClick={() => setDetailTab('roadmap')}
+            >
+              🛣️ Project Roadmap ({activeProjectRoadmapSteps.length} Steps)
+            </button>
+            <button 
+              className={`seg-btn ${detailTab === 'performance' ? 'active' : ''}`}
+              onClick={() => setDetailTab('performance')}
+            >
+              📊 Performance & Charts
+            </button>
+            <button 
+              className={`seg-btn ${detailTab === 'tasks' ? 'active' : ''}`}
+              onClick={() => setDetailTab('tasks')}
+            >
+              📋 Goals & Tasks ({totalTasks})
+            </button>
+          </div>
+        </div>
+
+        {/* TAB 1: PROJECT ROADMAP (Goals as sequential steps) */}
+        {detailTab === 'roadmap' && (
+          <div className="detail-tab-content fade-in">
+            <div className="roadmap-controls-card">
+              <div className="rc-left">
+                <span className="rc-title">Roadmap Sequence:</span>
+                <div className="segmented-control small">
+                  <button 
+                    className={`seg-btn ${detailRoadmapFilter === 'goals' ? 'active' : ''}`}
+                    onClick={() => setDetailRoadmapFilter('goals')}
+                  >
+                    🎯 Goal Milestones ({goalTasks.length})
+                  </button>
+                  <button 
+                    className={`seg-btn ${detailRoadmapFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setDetailRoadmapFilter('all')}
+                  >
+                    ⚡ All Steps ({totalTasks})
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Goal Adder directly on Roadmap */}
+              <form onSubmit={(e) => handleAddDetailTask(e, activeProject.id)} className="quick-goal-form">
+                <input 
+                  type="text" 
+                  value={detailNewTaskText} 
+                  onChange={e => setDetailNewTaskText(e.target.value)}
+                  placeholder="+ Add new project goal milestone..."
+                  className="quick-goal-input"
+                />
+                <button 
+                  type="submit" 
+                  className="btn-add-step"
+                  onClick={() => setDetailNewTaskCategory('goal')}
+                >
+                  + Add Goal Step
+                </button>
+              </form>
+            </div>
+
+            <div className="roadmap-wrapper-card">
+              <RoadmapVisualizer 
+                milestones={activeProjectRoadmapSteps}
+                goalTitle={`${activeProject.name} — Execution Journey`}
+                goalColor="#3b82f6"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: PERFORMANCE & CHARTS */}
+        {detailTab === 'performance' && (
+          <div className="detail-tab-content fade-in">
+            <div className="performance-detail-grid">
+              {/* Donut Chart & Overall Health */}
+              <div className="perf-main-card">
+                <h3 className="section-title">📊 Execution Progress</h3>
+                <div className="donut-chart-container">
+                  <div className="donut-chart-wrapper large">
+                    <svg className="donut-svg" width="160" height="160" viewBox="0 0 36 36">
+                      <path
+                        className="donut-bg"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="donut-fill"
+                        strokeDasharray={`${progressPct}, 100`}
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <div className="donut-text">
+                      <span className="donut-pct large">{progressPct}%</span>
+                      <span className="donut-sub">Completed</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="progress-bar-detail">
+                  <div className="pbd-labels">
+                    <span>Tasks Velocity</span>
+                    <span>{completedTasks} of {totalTasks} finished</span>
+                  </div>
+                  <div className="pbd-track">
+                    <div className="pbd-fill" style={{ width: `${progressPct}%` }}></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* KPI Analytics Cards */}
+              <div className="perf-metrics-container">
+                <div className="metric-box">
+                  <span className="metric-icon">🎯</span>
+                  <div className="metric-data">
+                    <span className="metric-num">{completedGoals} / {goalTasks.length}</span>
+                    <span className="metric-label">Goal Milestones Achieved</span>
+                  </div>
+                </div>
+
+                <div className="metric-box">
+                  <span className="metric-icon">⚡</span>
+                  <div className="metric-data">
+                    <span className="metric-num">{completedNormals} / {normalTasks.length}</span>
+                    <span className="metric-label">Actionable Tasks Done</span>
+                  </div>
+                </div>
+
+                <div className="metric-box">
+                  <span className="metric-icon">⏳</span>
+                  <div className="metric-data">
+                    <span className="metric-num">
+                      {daysLeft === null ? 'Flexible' : daysLeft < 0 ? `${Math.abs(daysLeft)}d Overdue` : `${daysLeft} Days Left`}
+                    </span>
+                    <span className="metric-label">
+                      {daysLeft !== null && daysLeft < 0 ? '🔴 Overdue Status' : '🟢 Schedule Health'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="metric-box">
+                  <span className="metric-icon">🏆</span>
+                  <div className="metric-data">
+                    <span className="metric-num">{activeProject.isCompleted ? 'Delivered' : 'Active Sprint'}</span>
+                    <span className="metric-label">Project Status</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: GOALS & TASKS SUB-TASKS WITH SWITCHER */}
+        {detailTab === 'tasks' && (
+          <div className="detail-tab-content fade-in">
+            <div className="tasks-management-panel">
+              <div className="panel-header">
+                <div>
+                  <h3 className="section-title">Project Sub-Tasks & Milestones</h3>
+                  <p className="section-sub">Add goal milestones (which map into the roadmap) or standard tasks.</p>
+                </div>
+
+                {/* Sub-Task Filter Switcher */}
+                <div className="segmented-control small">
+                  <button 
+                    className={`seg-btn ${detailTaskFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setDetailTaskFilter('all')}
+                  >
+                    All ({totalTasks})
+                  </button>
+                  <button 
+                    className={`seg-btn ${detailTaskFilter === 'goals' ? 'active' : ''}`}
+                    onClick={() => setDetailTaskFilter('goals')}
+                  >
+                    🎯 Goal Milestones ({goalTasks.length})
+                  </button>
+                  <button 
+                    className={`seg-btn ${detailTaskFilter === 'normal' ? 'active' : ''}`}
+                    onClick={() => setDetailTaskFilter('normal')}
+                  >
+                    ⚡ Actionable Tasks ({normalTasks.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Task Adder Form */}
+              <form onSubmit={(e) => handleAddDetailTask(e, activeProject.id)} className="detail-task-form">
+                <select 
+                  value={detailNewTaskCategory}
+                  onChange={e => setDetailNewTaskCategory(e.target.value)}
+                  className="detail-cat-picker"
+                >
+                  <option value="goal">🎯 Project Goal Milestone (Roadmap Node)</option>
+                  <option value="normal">⚡ Actionable Task</option>
+                </select>
+                <input 
+                  type="text" 
+                  value={detailNewTaskText} 
+                  onChange={e => setDetailNewTaskText(e.target.value)}
+                  placeholder="Enter milestone or actionable step..."
+                  className="detail-task-input"
+                  required
+                />
+                <button type="submit" className="btn-add-primary">+ Add Step</button>
+              </form>
+
+              {/* Tasks List */}
+              <div className="detail-tasks-list">
+                {(() => {
+                  const all = activeProject.tasks || [];
+                  const list = detailTaskFilter === 'goals'
+                    ? all.filter(t => t.category === 'goal')
+                    : detailTaskFilter === 'normal'
+                    ? all.filter(t => t.category !== 'goal')
+                    : all;
+
+                  if (list.length === 0) {
+                    return (
+                      <EmptyState 
+                        icon="🎯"
+                        title="No tasks in this category"
+                        text="Add goal milestones or tasks above to build this project's execution plan."
+                      />
+                    );
+                  }
+
+                  return list.map(t => (
+                    <div key={t.id} className={`detail-task-card ${t.completed ? 'completed' : ''}`}>
+                      <div 
+                        className={`pc-task-check ${t.completed ? 'checked' : ''}`}
+                        onClick={() => toggleProjectTask(activeProject.id, t.id)}
+                      >
+                        {t.completed && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        )}
+                      </div>
+                      <div className="task-content">
+                        <span className={`task-badge ${t.category === 'goal' ? 'goal' : 'normal'}`}>
+                          {t.category === 'goal' ? '🎯 GOAL MILESTONE' : '⚡ TASK'}
+                        </span>
+                        <span className="task-title-text">{t.text}</span>
+                      </div>
+                      <button 
+                        onClick={() => deleteProjectTask(activeProject.id, t.id)} 
+                        className="btn-del-task"
+                        title="Delete step"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <style jsx>{`
+          .detail-top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+          }
+          .btn-back {
+            background: var(--surface-low);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .btn-back:hover {
+            color: var(--accent-start);
+            border-color: var(--accent-start);
+            transform: translateX(-2px);
+          }
+
+          .project-detail-hero {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            flex-wrap: wrap;
+          }
+          .hero-left {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .tag-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .project-detail-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.3;
+          }
+          .project-detail-desc {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+          }
+          .detail-date-card {
+            background: var(--surface-low);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            gap: 20px;
+          }
+          .ddc-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          .ddc-lbl {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+          }
+          .ddc-val {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+          }
+          .ddc-item.highlight .ddc-val {
+            color: var(--accent-start);
+          }
+
+          /* Detail Tabs Switcher */
+          .detail-tabs-bar {
+            margin-bottom: 24px;
+          }
+          .main-tabs {
+            display: inline-flex;
+          }
+
+          /* Roadmap Tab Controls */
+          .roadmap-controls-card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+          }
+          .rc-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          .rc-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+          }
+          .quick-goal-form {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            max-width: 460px;
+          }
+          .quick-goal-input {
+            flex: 1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-low);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+          }
+          .quick-goal-input:focus {
+            outline: none;
+            border-color: var(--accent-start);
+          }
+          .btn-add-step {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent-start);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+          }
+
+          /* Performance Grid */
+          .performance-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+          }
+          @media (max-width: 800px) {
+            .performance-detail-grid { grid-template-columns: 1fr; }
+          }
+          .perf-main-card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          }
+          .section-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+          }
+          .section-sub {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 4px 0 0 0;
+          }
+          .donut-chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+          }
+          .donut-chart-wrapper.large {
+            width: 160px;
+            height: 160px;
+            position: relative;
+          }
+          .donut-pct.large {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--text-primary);
+          }
+          .progress-bar-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .pbd-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+          }
+          .pbd-track {
+            height: 10px;
+            background: var(--surface-low);
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+          }
+          .pbd-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-start), #0284c7);
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+          }
+
+          .perf-metrics-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .metric-box {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+          }
+          .metric-icon {
+            font-size: 1.8rem;
+            background: var(--surface-low);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+          }
+          .metric-data {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          .metric-num {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+          }
+          .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+          }
+
+          /* Tasks Tab */
+          .tasks-management-panel {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+          }
+          .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+          .detail-task-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+          }
+          .detail-cat-picker {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-low);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+          }
+          .detail-task-input {
+            flex: 1;
+            min-width: 260px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-low);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+          }
+          .detail-task-input:focus {
+            outline: none;
+            border-color: var(--accent-start);
+          }
+          .btn-add-primary {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-start), #0284c7);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+          }
+
+          .detail-tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .detail-task-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--surface-low);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+          }
+          .detail-task-card.completed {
+            opacity: 0.65;
+          }
+          .detail-task-card.completed .task-title-text {
+            text-decoration: line-through;
+          }
+          .task-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .task-title-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-primary);
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW: MAIN PROJECTS PORTFOLIO (GRID & ROADMAP)
+  // =========================================================================
   return (
     <div className="module-container fade-in">
       {/* Header & Main View Switcher */}
@@ -292,9 +1012,9 @@ export default function Projects() {
           </div>
 
           <div className="roadmap-wrapper-card">
-            {roadmapMilestones.length > 0 ? (
+            {portfolioRoadmapMilestones.length > 0 ? (
               <RoadmapVisualizer 
-                milestones={roadmapMilestones}
+                milestones={portfolioRoadmapMilestones}
                 goalTitle={selectedProjectId === 'all' ? 'All Projects Roadmap' : (projects.find(p => p.id === selectedProjectId)?.name || 'Project Roadmap')}
                 goalColor="#3b82f6"
               />
@@ -342,7 +1062,7 @@ export default function Projects() {
                       </div>
                       
                       <div className="pc-header-right">
-                        {/* Professionally Designed Executive Completion Toggle Button */}
+                        {/* Executive Completion Toggle Button */}
                         <button 
                           type="button"
                           className={`btn-complete-toggle ${p.isCompleted ? 'is-done' : ''}`}
@@ -359,7 +1079,7 @@ export default function Projects() {
                     </div>
                     
                     {/* Project Title & Description */}
-                    <div className="pc-title-row" onClick={() => setActiveDetailsProject(p)}>
+                    <div className="pc-title-row" onClick={() => setActiveProjectId(p.id)}>
                       <h4 className="pc-title" style={{ textDecoration: p.isCompleted ? 'line-through' : 'none' }}>
                         {p.name}
                       </h4>
@@ -389,13 +1109,13 @@ export default function Projects() {
                       </div>
                     </div>
 
-                    {/* View Details & Performance Button */}
+                    {/* Open Details & Roadmap Button */}
                     <div className="pc-details-trigger-row">
                       <button 
                         className="btn-details-trigger"
-                        onClick={() => setActiveDetailsProject(p)}
+                        onClick={() => setActiveProjectId(p.id)}
                       >
-                        📊 View Details & Analytics
+                        📊 Open Details & Roadmap →
                       </button>
                     </div>
 
@@ -455,210 +1175,6 @@ export default function Projects() {
       )}
 
       {/* ========================================================================= */}
-      {/* PROJECT DETAILS & PERFORMANCE MODAL */}
-      {/* ========================================================================= */}
-      {currentDetailsProject && (
-        <Modal isOpen={!!activeDetailsProject} onClose={() => setActiveDetailsProject(null)}>
-          <div className="details-modal-header">
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span className={`status-badge ${getProjectStatus(currentDetailsProject).replace(' ', '-').toLowerCase()}`}>
-                  {getProjectStatus(currentDetailsProject)}
-                </span>
-                <span className={`term-tag ${currentDetailsProject.term === 'long-term' ? 'long' : 'short'}`}>
-                  {currentDetailsProject.term === 'long-term' ? '🏔️ Long-Term' : '⚡ Short-Term'}
-                </span>
-                {currentDetailsProject.projectType && (
-                  <span className="pc-type">{currentDetailsProject.projectType}</span>
-                )}
-              </div>
-              <h3 className="details-title">{currentDetailsProject.name}</h3>
-            </div>
-            <button className="close-btn" onClick={() => setActiveDetailsProject(null)}>✕</button>
-          </div>
-
-          <div className="details-modal-body">
-            {currentDetailsProject.description && (
-              <p className="details-desc">{currentDetailsProject.description}</p>
-            )}
-
-            {/* Performance & Analytics Section */}
-            <div className="performance-card">
-              <div className="perf-header">
-                <h4>📊 Project Performance & Health</h4>
-                <button 
-                  className={`btn-complete-toggle ${currentDetailsProject.isCompleted ? 'is-done' : ''}`}
-                  onClick={() => toggleProjectComplete(currentDetailsProject.id)}
-                >
-                  <span className="chk-bubble">{currentDetailsProject.isCompleted ? '✓' : ''}</span>
-                  <span className="chk-label">{currentDetailsProject.isCompleted ? 'Completed' : 'Mark Project Done'}</span>
-                </button>
-              </div>
-
-              {(() => {
-                const tasks = currentDetailsProject.tasks || [];
-                const total = tasks.length;
-                const completed = tasks.filter(t => t.completed).length;
-                const pct = total > 0 ? Math.round((completed / total) * 100) : (currentDetailsProject.isCompleted ? 100 : 0);
-                
-                const goalTasks = tasks.filter(t => t.category === 'goal');
-                const normalTasks = tasks.filter(t => t.category !== 'goal');
-                const completedGoals = goalTasks.filter(t => t.completed).length;
-                const completedNormals = normalTasks.filter(t => t.completed).length;
-
-                // Dates calculation
-                const now = new Date();
-                const due = currentDetailsProject.dueDate ? new Date(currentDetailsProject.dueDate) : null;
-                const daysLeft = due ? Math.ceil((due - now) / (1000 * 60 * 60 * 24)) : null;
-
-                return (
-                  <div className="perf-grid">
-                    {/* Donut Progress Metric */}
-                    <div className="perf-chart-box">
-                      <div className="donut-chart-wrapper">
-                        <svg className="donut-svg" width="110" height="110" viewBox="0 0 36 36">
-                          <path
-                            className="donut-bg"
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                          <path
-                            className="donut-fill"
-                            strokeDasharray={`${pct}, 100`}
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                        </svg>
-                        <div className="donut-text">
-                          <span className="donut-pct">{pct}%</span>
-                          <span className="donut-sub">Complete</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Key Metrics Stats */}
-                    <div className="perf-stats-boxes">
-                      <div className="metric-pill">
-                        <span className="m-val">{completed}/{total}</span>
-                        <span className="m-lbl">Total Tasks Done</span>
-                      </div>
-                      <div className="metric-pill">
-                        <span className="m-val">🎯 {completedGoals}/{goalTasks.length}</span>
-                        <span className="m-lbl">Goal Milestones</span>
-                      </div>
-                      <div className="metric-pill">
-                        <span className="m-val">⚡ {completedNormals}/{normalTasks.length}</span>
-                        <span className="m-lbl">Actionable Tasks</span>
-                      </div>
-                      <div className="metric-pill">
-                        <span className="m-val">
-                          {daysLeft === null ? 'No Date' : daysLeft < 0 ? `Overdue (${Math.abs(daysLeft)}d)` : `${daysLeft} days`}
-                        </span>
-                        <span className="m-lbl">Schedule Health</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Key Sub-Tasks Section with Switchers */}
-            <div className="details-subtasks-section">
-              <div className="subtasks-header-row">
-                <h4>Key Sub-Tasks & Milestones</h4>
-                
-                {/* Switcher: All | Goal Milestones | Actionable Tasks */}
-                <div className="subtask-segmented-control">
-                  <button 
-                    className={`sub-seg-btn ${detailsSubTaskFilter === 'all' ? 'active' : ''}`}
-                    onClick={() => setDetailsSubTaskFilter('all')}
-                  >
-                    All ({(currentDetailsProject.tasks || []).length})
-                  </button>
-                  <button 
-                    className={`sub-seg-btn ${detailsSubTaskFilter === 'goals' ? 'active' : ''}`}
-                    onClick={() => setDetailsSubTaskFilter('goals')}
-                  >
-                    🎯 Goals ({(currentDetailsProject.tasks || []).filter(t => t.category === 'goal').length})
-                  </button>
-                  <button 
-                    className={`sub-seg-btn ${detailsSubTaskFilter === 'normal' ? 'active' : ''}`}
-                    onClick={() => setDetailsSubTaskFilter('normal')}
-                  >
-                    ⚡ Tasks ({(currentDetailsProject.tasks || []).filter(t => t.category !== 'goal').length})
-                  </button>
-                </div>
-              </div>
-
-              {/* Add Sub-Task inside Details */}
-              <form onSubmit={handleAddDetailsTask} className="details-add-task-form">
-                <select 
-                  value={detailsNewTaskCategory} 
-                  onChange={e => setDetailsNewTaskCategory(e.target.value)}
-                  className="glowing-input details-cat-select"
-                >
-                  <option value="normal">⚡ Actionable Task</option>
-                  <option value="goal">🎯 Goal Milestone</option>
-                </select>
-                <input 
-                  type="text" 
-                  value={detailsNewTaskText} 
-                  onChange={e => setDetailsNewTaskText(e.target.value)}
-                  placeholder="Add a new milestone or sub-task..."
-                  className="glowing-input details-task-input"
-                />
-                <button type="submit" className="btn-add-detail-task">+ Add</button>
-              </form>
-
-              {/* Sub-Tasks List */}
-              <div className="details-task-items">
-                {(() => {
-                  const all = currentDetailsProject.tasks || [];
-                  const list = detailsSubTaskFilter === 'goals' 
-                    ? all.filter(t => t.category === 'goal')
-                    : detailsSubTaskFilter === 'normal'
-                    ? all.filter(t => t.category !== 'goal')
-                    : all;
-
-                  if (list.length === 0) {
-                    return (
-                      <p className="no-subtasks-msg">
-                        No sub-tasks in this category. Add one above!
-                      </p>
-                    );
-                  }
-
-                  return list.map(t => (
-                    <div key={t.id} className={`details-task-row ${t.completed ? 'completed' : ''}`}>
-                      <div 
-                        className={`pc-task-check ${t.completed ? 'checked' : ''}`}
-                        onClick={() => toggleProjectTask(currentDetailsProject.id, t.id)}
-                      >
-                        {t.completed && (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        )}
-                      </div>
-                      <div className="details-task-text-group">
-                        <span className={`task-badge ${t.category === 'goal' ? 'goal' : 'normal'}`}>
-                          {t.category === 'goal' ? '🎯 Goal Milestone' : '⚡ Task'}
-                        </span>
-                        <span className="details-task-title">{t.text}</span>
-                      </div>
-                      <button 
-                        onClick={() => deleteProjectTask(currentDetailsProject.id, t.id)} 
-                        className="btn-del-task" 
-                        title="Delete task"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ));
-                })()}
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* ========================================================================= */}
       {/* EDIT PROJECT MODAL */}
       {/* ========================================================================= */}
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
@@ -687,7 +1203,6 @@ export default function Projects() {
             />
           </div>
           
-          {/* Horizon / Term Selector in Edit */}
           <div className="form-group">
             <label>Project Horizon / Term</label>
             <div className="term-toggle-group">
@@ -759,7 +1274,7 @@ export default function Projects() {
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)} 
-              placeholder="e.g. Mobile App Redesign"
+              placeholder="e.g. School Management System"
               className="glowing-input"
               required
             />
@@ -775,7 +1290,6 @@ export default function Projects() {
             />
           </div>
 
-          {/* Horizon / Term Selector */}
           <div className="form-group">
             <label>Project Horizon / Term</label>
             <div className="term-toggle-group">
@@ -856,6 +1370,57 @@ export default function Projects() {
       </Modal>
 
       <style jsx>{`
+        /* Segmented Controls */
+        .segmented-control {
+          display: inline-flex;
+          background: var(--surface-low);
+          border-radius: 12px;
+          padding: 4px;
+          gap: 4px;
+          border: 1px solid var(--border-color);
+        }
+        .segmented-control.small {
+          border-radius: 8px;
+          padding: 3px;
+          gap: 3px;
+        }
+        .segmented-control.main-tabs {
+          border-radius: 12px;
+          padding: 5px;
+          gap: 6px;
+        }
+        .seg-btn {
+          padding: 8px 16px;
+          border-radius: 8px;
+          border: none;
+          background: transparent;
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+        }
+        .segmented-control.small .seg-btn {
+          padding: 5px 12px;
+          font-size: 0.78rem;
+          border-radius: 6px;
+        }
+        .segmented-control.main-tabs .seg-btn {
+          padding: 10px 18px;
+          font-size: 0.9rem;
+          border-radius: 8px;
+        }
+        .seg-btn:hover {
+          color: var(--text-primary);
+        }
+        .seg-btn.active {
+          background: var(--surface);
+          color: var(--accent-start);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          border: 1px solid rgba(0, 229, 255, 0.25);
+        }
+
         /* Term / Horizon Filter Bar */
         .term-filter-bar {
           margin: 18px 0 24px 0;
@@ -978,7 +1543,7 @@ export default function Projects() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 5px 10px;
+          padding: 6px 12px;
           border-radius: 8px;
           font-size: 0.75rem;
           font-weight: 700;
@@ -1102,20 +1667,20 @@ export default function Projects() {
         }
         .btn-details-trigger {
           width: 100%;
-          padding: 8px 12px;
+          padding: 10px 14px;
           border-radius: 8px;
-          border: 1px solid var(--border-color);
-          background: var(--surface-low);
-          color: var(--text-secondary);
-          font-size: 0.8rem;
+          border: 1px solid rgba(0, 229, 255, 0.3);
+          background: linear-gradient(135deg, rgba(0, 229, 255, 0.08), rgba(59, 130, 246, 0.08));
+          color: var(--accent-start);
+          font-size: 0.85rem;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s ease;
         }
         .btn-details-trigger:hover {
-          color: var(--accent-start);
+          background: linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(59, 130, 246, 0.18));
           border-color: var(--accent-start);
-          background: rgba(0, 229, 255, 0.08);
+          transform: translateY(-1px);
         }
 
         /* Checklist */
@@ -1294,64 +1859,7 @@ export default function Projects() {
           padding: 24px;
         }
 
-        /* Details Modal Styles */
-        .details-modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 16px;
-        }
-        .details-title {
-          font-size: 1.3rem;
-          font-weight: 800;
-          color: var(--text-primary);
-          margin: 0;
-        }
-        .details-modal-body {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-        .details-desc {
-          color: var(--text-secondary);
-          line-height: 1.5;
-          margin: 0;
-          font-size: 0.9rem;
-        }
-
-        .performance-card {
-          background: var(--surface-low);
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-        .perf-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .perf-header h4 {
-          margin: 0;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--text-primary);
-        }
-
-        .perf-grid {
-          display: grid;
-          grid-template-columns: 130px 1fr;
-          gap: 16px;
-          align-items: center;
-        }
-        .donut-chart-wrapper {
-          position: relative;
-          width: 110px;
-          height: 110px;
-          margin: 0 auto;
-        }
+        /* Donut SVG Common */
         .donut-svg {
           transform: rotate(-90deg);
         }
@@ -1375,136 +1883,16 @@ export default function Projects() {
           align-items: center;
           justify-content: center;
         }
-        .donut-pct {
-          font-size: 1.2rem;
-          font-weight: 900;
-          color: var(--text-primary);
-        }
         .donut-sub {
-          font-size: 0.65rem;
+          font-size: 0.7rem;
           color: var(--text-muted);
           text-transform: uppercase;
         }
 
-        .perf-stats-boxes {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .metric-pill {
-          background: var(--surface);
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          padding: 10px;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .m-val {
-          font-size: 0.95rem;
-          font-weight: 800;
-          color: var(--text-primary);
-        }
-        .m-lbl {
-          font-size: 0.7rem;
-          color: var(--text-muted);
-        }
-
-        /* Sub-Tasks section inside Details Modal */
-        .details-subtasks-section {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .subtasks-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-        .subtasks-header-row h4 {
-          margin: 0;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--text-primary);
-        }
-        .subtask-segmented-control {
-          display: flex;
-          background: var(--surface-low);
-          border-radius: 8px;
-          padding: 3px;
-          border: 1px solid var(--border-color);
-        }
-        .sub-seg-btn {
-          padding: 4px 10px;
-          border-radius: 6px;
-          border: none;
-          background: transparent;
-          color: var(--text-secondary);
-          font-size: 0.75rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: 0.2s;
-        }
-        .sub-seg-btn.active {
-          background: var(--surface);
-          color: var(--accent-start);
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        .details-add-task-form {
-          display: flex;
-          gap: 8px;
-        }
-        .details-cat-select {
-          width: auto;
-          font-size: 0.85rem;
-        }
-        .details-task-input {
-          flex: 1;
-        }
-        .btn-add-detail-task {
-          padding: 8px 16px;
-          border-radius: 8px;
-          border: none;
-          background: var(--accent-start);
-          color: white;
-          font-weight: 700;
-          font-size: 0.85rem;
-          cursor: pointer;
-        }
-
-        .details-task-items {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          max-height: 240px;
-          overflow-y: auto;
-        }
-        .details-task-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 12px;
-          border-radius: 8px;
-          background: var(--surface-low);
-          border: 1px solid var(--border-color);
-        }
-        .details-task-row.completed .details-task-title {
-          text-decoration: line-through;
-          color: var(--text-muted);
-        }
-        .details-task-text-group {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
         .task-badge {
           font-size: 0.7rem;
           font-weight: 800;
-          padding: 2px 6px;
+          padding: 2px 8px;
           border-radius: 4px;
         }
         .task-badge.goal {
@@ -1514,17 +1902,6 @@ export default function Projects() {
         .task-badge.normal {
           background: rgba(245, 158, 11, 0.15);
           color: #fbbf24;
-        }
-        .details-task-title {
-          font-size: 0.9rem;
-          color: var(--text-primary);
-        }
-        .no-subtasks-msg {
-          text-align: center;
-          color: var(--text-muted);
-          font-size: 0.85rem;
-          padding: 16px;
-          margin: 0;
         }
 
         /* Form styling */

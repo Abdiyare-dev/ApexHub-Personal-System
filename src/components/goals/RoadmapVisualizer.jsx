@@ -47,13 +47,14 @@ export default function RoadmapVisualizer({ milestones = [], goalColor = '#8b5cf
   const activeMilestone = enrichedMilestones[avatarIndex];
 
   // Tight, zoomed-in geometry calculations
-  const SPACING = isMobile ? 130 : 160;
-  const AMPLITUDE = isMobile ? 50 : 55;
-  const OFFSET = isMobile ? 50 : 65;
+  // Geometry calculations
+  const SPACING = isMobile ? 130 : 180;
+  const AMPLITUDE = isMobile ? 40 : 40;
+  const OFFSET = isMobile ? 60 : 90;
 
   const getCoordinates = (index, mobile) => {
     const primary = OFFSET + index * SPACING;
-    const secondary = (mobile ? 140 : 110) + Math.sin(index * Math.PI / 2) * AMPLITUDE;
+    const secondary = (mobile ? 140 : 125) + Math.sin(index * Math.PI / 2) * AMPLITUDE;
     
     if (mobile) {
       return { x: secondary, y: primary }; // Vertical winding
@@ -93,8 +94,8 @@ export default function RoadmapVisualizer({ milestones = [], goalColor = '#8b5cf
   const lockedPath = generatePath(activeMilestoneIdx === -1 ? enrichedMilestones.length - 1 : activeMilestoneIdx, enrichedMilestones.length - 1, isMobile);
 
   const totalLength = OFFSET * 2 + (enrichedMilestones.length - 1) * SPACING;
-  const viewBoxWidth = isMobile ? 280 : Math.max(340, totalLength);
-  const viewBoxHeight = isMobile ? Math.max(400, totalLength) : 220;
+  const viewBoxWidth = isMobile ? 280 : Math.max(460, totalLength);
+  const viewBoxHeight = isMobile ? Math.max(380, totalLength) : 260;
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(2.0, +(prev + 0.15).toFixed(2)));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(0.8, +(prev - 0.15).toFixed(2)));

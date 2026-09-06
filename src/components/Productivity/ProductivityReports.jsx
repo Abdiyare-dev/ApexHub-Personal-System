@@ -525,76 +525,222 @@ export default function ProductivityReports() {
     }
   };
 
+  // ─── VISUAL PROGRESS BAR HELPER ──────────────────────────────────────────
+  const renderProgressBar = (percent) => {
+    const p = Math.max(0, Math.min(100, Math.round(percent || 0)));
+    const filled = Math.round(p / 10);
+    const empty = 10 - filled;
+    return `${'█'.repeat(filled)}${'░'.repeat(empty)} ${p}%`;
+  };
+
   // ─── MULTI-SHEET EXCEL EXPORT ──────────────────────────────────────────────
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: Executive Summary & Comparison
+    // ── SHEET 1: EXECUTIVE SUMMARY & PERIOD COMPARISON ──
     const summaryRows = [
-      ['ApexHub Productivity & Performance Report'],
-      ['Generated On', new Date().toLocaleString()],
-      ['Current Period Window', `${fromDate || 'Beginning'} to ${toDate || 'Present'}`],
-      ['Baseline Prior Window', previousPeriod.label],
-      ['Executive Performance Score', `${performanceScore}/100`],
+      ['APEXHUB PRODUCTIVITY & PERFORMANCE EXECUTIVE REPORT'],
+      ['Personal Performance & Productivity Intelligence System'],
       [],
-      ['Metric', 'Prior Period', 'Selected Period', 'Change %'],
-      ['Tasks Completed', priorTasksDone, currentTasksDone, `${tasksDoneDelta}%`],
-      ['Task Completion Rate', `${priorTaskRate}%`, `${currentTaskRate}%`, `${taskRateDelta}% pts`],
-      ['Projects Finished', priorProjectsDone, currentProjectsDone, `${projectsDoneDelta}%`],
-      ['Total Scoped Tasks', priorTasks.length, filteredTasks.length, ''],
-      ['Average Goal Progress', '', `${currentAvgGoal}%`, '']
+      ['REPORT METADATA'],
+      ['Generated On', new Date().toLocaleString()],
+      ['Current Analysis Window', `${fromDate ? fmtDate(fromDate) : 'Beginning'} to ${toDate ? fmtDate(toDate) : 'Present'}`],
+      ['Baseline Prior Window', previousPeriod.label],
+      ['Report Scope Mode', reportScope.toUpperCase()],
+      ['Executive Performance Index', `${performanceScore} / 100`, performanceScore >= 70 ? 'HIGH MOMENTUM' : 'MODERATE'],
+      [],
+      ['PERIOD-OVER-PERIOD PERFORMANCE COMPARISON MATRIX'],
+      ['Productivity Metric', 'Baseline Period', 'Selected Period', 'Variance / Delta', 'Trajectory Trend', 'Visual Progress'],
+      [
+        'Tasks Completed Count',
+        priorTasksDone,
+        currentTasksDone,
+        `${tasksDoneDelta >= 0 ? '+' : ''}${tasksDoneDelta}%`,
+        tasksDoneDelta >= 0 ? 'Accelerating' : 'Decelerating',
+        renderProgressBar(filteredTasks.length ? (currentTasksDone / filteredTasks.length) * 100 : 0)
+      ],
+      [
+        'Task Completion Rate',
+        `${priorTaskRate}%`,
+        `${currentTaskRate}%`,
+        `${taskRateDelta >= 0 ? '+' : ''}${taskRateDelta}% pts`,
+        taskRateDelta >= 0 ? 'Positive Velocity' : 'Attention Needed',
+        renderProgressBar(currentTaskRate)
+      ],
+      [
+        'Projects Finished Count',
+        priorProjectsDone,
+        currentProjectsDone,
+        `${projectsDoneDelta >= 0 ? '+' : ''}${projectsDoneDelta}%`,
+        projectsDoneDelta >= 0 ? 'On Schedule' : 'Lagging',
+        renderProgressBar(filteredProjects.length ? (currentProjectsDone / filteredProjects.length) * 100 : 0)
+      ],
+      [
+        'Active Projects Tracked',
+        priorProjects.length,
+        filteredProjects.length,
+        `${filteredProjects.length - priorProjects.length >= 0 ? '+' : ''}${filteredProjects.length - priorProjects.length}`,
+        'Portfolio Active',
+        renderProgressBar(100)
+      ],
+      [
+        'Average Goal Milestone Progress',
+        '-',
+        `${currentAvgGoal}%`,
+        '-',
+        'Strategic Execution',
+        renderProgressBar(currentAvgGoal)
+      ],
+      [
+        'Executive Performance Score',
+        '70 / 100',
+        `${performanceScore} / 100`,
+        `${performanceScore - 70 >= 0 ? '+' : ''}${performanceScore - 70} pts`,
+        performanceScore >= 70 ? 'Optimal Cadence' : 'Improvement Room',
+        renderProgressBar(performanceScore)
+      ],
+      [],
+      ['EFFORT & CATEGORY ALLOCATION BREAKDOWN'],
+      ['Category / Domain', 'Task Count', '% Share of Total', 'Distribution Visual'],
+      ...categoryChartData.map(c => {
+        const share = filteredTasks.length ? Math.round((c.value / filteredTasks.length) * 100) : 0;
+        return [c.name, c.value, `${share}%`, renderProgressBar(share)];
+      })
     ];
+
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [
+      { wch: 34 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 24 },
+      { wch: 24 }
+    ];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Executive Summary');
 
-    // Sheet 2: Tasks Ledger
+    // ── SHEET 2: ACTION TASKS LEDGER ──
     if (reportScope === 'all' || reportScope === 'tasks') {
       const taskRows = [
-        ['Task Title', 'Status', 'Priority', 'Recurrence / Period', 'Due Date', 'Created Date'],
-        ...filteredTasks.map(t => [
+        ['APEXHUB ACTION TASKS ITEMIZATION LEDGER'],
+        ['Total Tasks Scoped:', filteredTasks.length, 'Completed:', currentTasksDone, 'Completion Rate:', `${currentTaskRate}%`],
+        [],
+        ['#', 'Task Title', 'Status', 'Priority', 'Cadence / Recurrence', 'Due Date', 'Created Date', 'Execution Status']
+      ];
+
+      filteredTasks.forEach((t, idx) => {
+        const isDone = t.status === 'Completed';
+        taskRows.push([
+          idx + 1,
           t.title,
           t.status || 'Incomplete',
-          t.priority || 'Normal',
-          t.period || t.recurrence_rule || 'One-off',
+          (t.priority || 'Medium').toUpperCase(),
+          t.period || t.recurrence_rule || 'One-off Task',
           fmtDate(t.dueDate || t.due_date),
-          fmtDate(t.created_at)
-        ])
-      ];
+          fmtDate(t.created_at),
+          isDone ? '✓ COMPLETED' : '○ IN PROGRESS'
+        ]);
+      });
+
       const wsTasks = XLSX.utils.aoa_to_sheet(taskRows);
+      wsTasks['!cols'] = [
+        { wch: 6 },
+        { wch: 40 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 22 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 18 }
+      ];
       XLSX.utils.book_append_sheet(wb, wsTasks, 'Action Tasks');
     }
 
-    // Sheet 3: Projects
+    // ── SHEET 3: PROJECTS PORTFOLIO ──
     if (reportScope === 'all' || reportScope === 'projects') {
       const projectRows = [
-        ['Project Name', 'Category / Type', 'Horizon / Term', 'Status', 'Start Date', 'Due Date', 'Progress %'],
-        ...filteredProjects.map(p => [
-          p.name || p.title || 'Untitled',
-          p.projectType || 'Standard',
-          p.term || 'short-term',
+        ['APEXHUB PROJECT PORTFOLIO & EXECUTION ROADMAP'],
+        ['Total Projects:', filteredProjects.length, 'Completed:', currentProjectsDone, 'Active:', filteredProjects.length - currentProjectsDone],
+        [],
+        ['#', 'Project Name', 'Category / Domain', 'Horizon / Term', 'Status', 'Start Date', 'Due Date', 'Sub-Tasks Total', 'Sub-Tasks Done', 'Progress %', 'Progress Visual']
+      ];
+
+      filteredProjects.forEach((p, idx) => {
+        const subTasks = p.tasks || [];
+        const doneCount = subTasks.filter(t => t.completed).length;
+        const progNum = subTasks.length ? Math.round((doneCount / subTasks.length) * 100) : (p.isCompleted ? 100 : 0);
+
+        projectRows.push([
+          idx + 1,
+          p.name || p.title || 'Untitled Project',
+          p.projectType || 'Personal',
+          p.term === 'long-term' ? 'Long-Term (Strategic)' : 'Short-Term (Sprint)',
           p.isCompleted ? 'Completed' : 'In Progress',
           fmtDate(p.startDate || p.start_date),
           fmtDate(p.dueDate || p.due_date),
-          taskProgress(p)
-        ])
-      ];
+          subTasks.length,
+          doneCount,
+          `${progNum}%`,
+          renderProgressBar(progNum)
+        ]);
+      });
+
       const wsProjects = XLSX.utils.aoa_to_sheet(projectRows);
+      wsProjects['!cols'] = [
+        { wch: 6 },
+        { wch: 34 },
+        { wch: 20 },
+        { wch: 24 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 22 }
+      ];
       XLSX.utils.book_append_sheet(wb, wsProjects, 'Projects Portfolio');
     }
 
-    // Sheet 4: Goals
+    // ── SHEET 4: STRATEGIC GOALS & MILESTONES ──
     if (reportScope === 'all' || reportScope === 'goals') {
       const goalRows = [
-        ['Strategic Goal', 'Timeframe', 'Category', 'Target Date', 'Completion Rate %'],
-        ...filteredGoals.map(g => [
+        ['APEXHUB STRATEGIC GOALS & MILESTONES ROADMAP'],
+        ['Total Strategic Goals:', filteredGoals.length, 'Average Goal Completion:', `${currentAvgGoal}%`],
+        [],
+        ['#', 'Strategic Goal Title', 'Timeframe', 'Category', 'Target Date', 'Milestones Done', 'Total Milestones', 'Progress %', 'Progress Visual']
+      ];
+
+      filteredGoals.forEach((g, idx) => {
+        const ms = g.milestones || [];
+        const msDone = ms.filter(m => m.completed).length;
+        const prog = g.completionRate || (ms.length ? Math.round((msDone / ms.length) * 100) : 0);
+
+        goalRows.push([
+          idx + 1,
           g.title,
           g.type || 'Yearly',
           g.category || 'Strategic',
           fmtDate(g.targetDate || g.target_date),
-          `${g.completionRate || 0}%`
-        ])
-      ];
+          msDone,
+          ms.length,
+          `${prog}%`,
+          renderProgressBar(prog)
+        ]);
+      });
+
       const wsGoals = XLSX.utils.aoa_to_sheet(goalRows);
+      wsGoals['!cols'] = [
+        { wch: 6 },
+        { wch: 36 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 14 },
+        { wch: 22 }
+      ];
       XLSX.utils.book_append_sheet(wb, wsGoals, 'Strategic Goals');
     }
 

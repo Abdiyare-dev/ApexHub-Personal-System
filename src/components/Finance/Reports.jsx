@@ -400,41 +400,198 @@ export default function FinanceReports() {
     }
   };
 
+  // ─── VISUAL PROGRESS BAR HELPER ──────────────────────────────────────────
+  const renderProgressBar = (percent) => {
+    const p = Math.max(0, Math.min(100, Math.round(percent || 0)));
+    const filled = Math.round(p / 10);
+    const empty = 10 - filled;
+    return `${'█'.repeat(filled)}${'░'.repeat(empty)} ${p}%`;
+  };
+
   // ─── MULTI-SHEET EXCEL EXPORT ──────────────────────────────────────────────
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: Executive Overview
+    // ── SHEET 1: FINANCIAL EXECUTIVE SUMMARY & COMPARISON ──
     const summaryRows = [
-      ['ApexHub Financial Executive Report'],
-      ['Generated On', new Date().toLocaleString()],
-      ['Current Period', `${fromDate || 'Beginning'} to ${toDate || 'Present'}`],
-      ['Baseline Period', previousPeriod.label],
+      ['APEXHUB FINANCIAL INTELLIGENCE & CASH FLOW AUDIT REPORT'],
+      ['Personal Wealth & Cash Flow Performance System'],
       [],
-      ['Metric', 'Prior Period', 'Selected Period', 'Change %'],
-      ['Total Inflow', priorIncome, totalIncome, `${incomeDelta}%`],
-      ['Total Outflow', priorExpense, totalExpense, `${expenseDelta}%`],
-      ['Net Capital Savings', priorNetCashFlow, netCashFlow, `${netCashFlowDelta}%`],
-      ['Savings Rate', `${priorSavingsRate}%`, `${savingsRate}%`, `${savingsRateDelta}% pts`],
-      ['Total Transactions', priorTx.length, filteredTx.length, '']
+      ['REPORT METADATA'],
+      ['Generated On', new Date().toLocaleString()],
+      ['Current Analysis Window', `${fromDate ? fmtDate(fromDate) : 'Beginning'} to ${toDate ? fmtDate(toDate) : 'Present'}`],
+      ['Baseline Prior Window', previousPeriod.label],
+      ['Transaction Flow Scope', reportType.toUpperCase()],
+      ['Financial Health Status', netCashFlow >= 0 ? 'CAPITAL SURPLUS' : 'CAPITAL DEFICIT', `Savings Rate: ${savingsRate}%`],
+      [],
+      ['PERIOD-OVER-PERIOD FINANCIAL COMPARISON MATRIX'],
+      ['Financial Metric', 'Prior Baseline ($)', 'Selected Period ($)', 'Variance / Delta %', 'Financial Trajectory', 'Health Status'],
+      [
+        'Total Cash Inflow',
+        priorIncome,
+        totalIncome,
+        `${incomeDelta >= 0 ? '+' : ''}${incomeDelta}%`,
+        incomeDelta >= 0 ? 'Expansion' : 'Contraction',
+        incomeDelta >= 0 ? '✓ HEALTHY' : '○ NEUTRAL'
+      ],
+      [
+        'Total Expenses Outflow',
+        priorExpense,
+        totalExpense,
+        `${expenseDelta >= 0 ? '+' : ''}${expenseDelta}%`,
+        expenseDelta <= 0 ? 'Reduced Outflow' : 'Increased Spending',
+        expenseDelta <= 0 ? '✓ OPTIMIZED' : '⚠ ATTENTION'
+      ],
+      [
+        'Net Capital Cash Flow',
+        priorNetCashFlow,
+        netCashFlow,
+        `${netCashFlowDelta >= 0 ? '+' : ''}${netCashFlowDelta}%`,
+        netCashFlow >= 0 ? 'Surplus Generation' : 'Capital Deficit',
+        netCashFlow >= 0 ? '✓ SURPLUS' : '⚠ DEFICIT'
+      ],
+      [
+        'Capital Savings Rate',
+        `${priorSavingsRate}%`,
+        `${savingsRate}%`,
+        `${savingsRateDelta >= 0 ? '+' : ''}${savingsRateDelta}% pts`,
+        savingsRate >= 20 ? 'Strong Capital Retention' : 'Moderate Retention',
+        renderProgressBar(savingsRate)
+      ],
+      [
+        'Total Recorded Transactions',
+        priorTx.length,
+        filteredTx.length,
+        `${filteredTx.length - priorTx.length >= 0 ? '+' : ''}${filteredTx.length - priorTx.length}`,
+        'Active Financial Ledger',
+        renderProgressBar(100)
+      ],
+      [],
+      ['EXPENDITURE ALLOCATION BY CATEGORY'],
+      ['Category Name', 'Total Outflow ($)', 'Share of Spending %', 'Spending Distribution Visual'],
+      ...categoryData.map(c => {
+        const share = totalExpense > 0 ? Math.round((c.value / totalExpense) * 100) : 0;
+        return [c.name, c.value, `${share}%`, renderProgressBar(share)];
+      })
     ];
+
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [
+      { wch: 32 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 28 },
+      { wch: 24 }
+    ];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Executive Summary');
 
-    // Sheet 2: Category Breakdown
-    const catRows = [
-      ['Category Name', 'Total Outflow ($)', 'Share of Spending %'],
-      ...categoryData.map(c => [c.name, c.value, totalExpense > 0 ? `${((c.value / totalExpense) * 100).toFixed(1)}%` : '0%'])
-    ];
-    const wsCat = XLSX.utils.aoa_to_sheet(catRows);
-    XLSX.utils.book_append_sheet(wb, wsCat, 'Category Breakdown');
+    // ── SHEET 2: CASH INFLOW LEDGER ──
+    const incomeTx = filteredTx.filter(t => t.type === 'income');
+    if (incomeTx.length > 0 || reportType === 'all' || reportType === 'income') {
+      const inflowRows = [
+        ['APEXHUB CASH INFLOW BREAKDOWN'],
+        ['Total Inflow Transactions:', incomeTx.length, 'Total Capital Inflow:', totalIncome],
+        [],
+        ['#', 'Date', 'Income Category', 'Description', 'Amount ($)']
+      ];
 
-    // Sheet 3: Transactions
-    const wsTx = XLSX.utils.aoa_to_sheet([
-      ['Date', 'Type', 'Category', 'Description', 'Amount'],
-      ...getReportData()
-    ]);
-    XLSX.utils.book_append_sheet(wb, wsTx, 'Transactions Ledger');
+      incomeTx.forEach((t, idx) => {
+        inflowRows.push([
+          idx + 1,
+          fmtDate(t.date),
+          t.category || 'Income',
+          t.description || '-',
+          Number(t.amount) || 0
+        ]);
+      });
+
+      inflowRows.push([]);
+      inflowRows.push(['TOTAL INFLOW', '', '', '', totalIncome]);
+
+      const wsInflow = XLSX.utils.aoa_to_sheet(inflowRows);
+      wsInflow['!cols'] = [
+        { wch: 6 },
+        { wch: 16 },
+        { wch: 24 },
+        { wch: 38 },
+        { wch: 18 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsInflow, 'Cash Inflow');
+    }
+
+    // ── SHEET 3: EXPENSES OUTFLOW LEDGER ──
+    const expenseTx = filteredTx.filter(t => t.type === 'expense');
+    if (expenseTx.length > 0 || reportType === 'all' || reportType === 'expense') {
+      const expenseRows = [
+        ['APEXHUB EXPENSES OUTFLOW BREAKDOWN'],
+        ['Total Outflow Transactions:', expenseTx.length, 'Total Capital Outflow:', totalExpense],
+        [],
+        ['#', 'Date', 'Expense Category', 'Description', 'Amount ($)']
+      ];
+
+      expenseTx.forEach((t, idx) => {
+        expenseRows.push([
+          idx + 1,
+          fmtDate(t.date),
+          t.category || 'Expense',
+          t.description || '-',
+          Number(t.amount) || 0
+        ]);
+      });
+
+      expenseRows.push([]);
+      expenseRows.push(['TOTAL EXPENSES', '', '', '', totalExpense]);
+
+      const wsExpense = XLSX.utils.aoa_to_sheet(expenseRows);
+      wsExpense['!cols'] = [
+        { wch: 6 },
+        { wch: 16 },
+        { wch: 24 },
+        { wch: 38 },
+        { wch: 18 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsExpense, 'Expenses Outflow');
+    }
+
+    // ── SHEET 4: COMPLETE FINANCIAL LEDGER ──
+    const txRows = [
+      ['APEXHUB ITEMIZED FINANCIAL TRANSACTIONS LEDGER'],
+      ['Total Transactions:', filteredTx.length, 'Net Balance:', netCashFlow],
+      [],
+      ['#', 'Date', 'Flow Type', 'Category', 'Description', 'Inflow (+)', 'Outflow (-)', 'Net Signed Impact ($)']
+    ];
+
+    filteredTx.forEach((t, idx) => {
+      const isInc = t.type === 'income';
+      const numAmt = Number(t.amount) || 0;
+      txRows.push([
+        idx + 1,
+        fmtDate(t.date),
+        isInc ? 'INCOME' : 'EXPENSE',
+        t.category || 'General',
+        t.description || '-',
+        isInc ? numAmt : '',
+        !isInc ? numAmt : '',
+        isInc ? numAmt : -numAmt
+      ]);
+    });
+
+    txRows.push([]);
+    txRows.push(['NET PERIOD BALANCE', '', '', '', '', totalIncome, totalExpense, netCashFlow]);
+
+    const wsTx = XLSX.utils.aoa_to_sheet(txRows);
+    wsTx['!cols'] = [
+      { wch: 6 },
+      { wch: 16 },
+      { wch: 14 },
+      { wch: 24 },
+      { wch: 38 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 22 }
+    ];
+    XLSX.utils.book_append_sheet(wb, wsTx, 'Full Financial Ledger');
 
     XLSX.writeFile(wb, `finance_report_${fromDate || 'all'}_to_${toDate || 'all'}.xlsx`);
   };

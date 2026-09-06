@@ -293,6 +293,8 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS end_date       DATE;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_completed   BOOLEAN DEFAULT false;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS tasks          JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS specific_goals TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS term           TEXT DEFAULT 'short-term';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_term   TEXT DEFAULT 'short-term';
 
 -- Verify afterwards:
 --   SELECT table_name, column_name FROM information_schema.columns

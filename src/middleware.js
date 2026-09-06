@@ -54,6 +54,9 @@ export async function middleware(request) {
     '/update-password',
     '/auth',
     '/api/auth',
+    // Offline fallback: public/sw.js precaches this at install time with a
+    // plain uncredentialed fetch, so it must not redirect to /login.
+    '/offline',
   ];
 
   const { pathname } = request.nextUrl;
@@ -88,7 +91,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public assets (images, icons, etc.)
+     * - sw.js / manifest.webmanifest: the browser requests both without
+     *   credentials, so an auth redirect here silently breaks PWA install.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

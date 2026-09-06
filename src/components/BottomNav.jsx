@@ -134,7 +134,7 @@ export default function BottomNav() {
 
       <style jsx>{`
         .scrollable-bottom-nav {
-          display: flex;
+          /* visibility is owned by globals.css .bottom-nav (mobile-only) */
           overflow-x: auto;
           overflow-y: hidden;
           padding: 8px 16px;

@@ -153,13 +153,13 @@ export default function Planner() {
       await addTask({
         title: text.trim(),
         dueDate: dateStr,
-        priority: 'Medium',
+        priority: 'medium',
         status: 'Incomplete'
       });
       setNewTaskInput(prev => ({ ...prev, [dateStr]: '' }));
       setActiveInputType(prev => ({ ...prev, [dateStr]: null }));
     } catch (err) {
-      console.error('Failed to add quick task:', err);
+      console.error('Failed to add quick task:', err?.message || err);
     }
   };
 

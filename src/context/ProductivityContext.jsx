@@ -220,8 +220,19 @@ export function ProductivityProvider({ children }) {
     if (!dbTask.status) {
       dbTask.status = 'Incomplete';
     }
+    if (dbTask.priority) {
+      dbTask.priority = String(dbTask.priority).toLowerCase();
+      if (!['low', 'medium', 'high', 'urgent'].includes(dbTask.priority)) {
+        delete dbTask.priority;
+      }
+    }
     
-    const { error } = await supabase.from('tasks').insert(dbTask);
+    let { error } = await supabase.from('tasks').insert(dbTask);
+    if (error && dbTask.priority) {
+      delete dbTask.priority;
+      const retry = await supabase.from('tasks').insert(dbTask);
+      error = retry.error;
+    }
     if (error) { console.warn('[productivity] add task failed:', formatError(error)); throw error; }
     await refreshTasks();
   };

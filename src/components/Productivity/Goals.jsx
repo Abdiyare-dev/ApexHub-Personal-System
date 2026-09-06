@@ -2,12 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import { useProductivity } from '@/context/ProductivityContext';
+import { useHabits } from '@/hooks/useHabits';
 import Modal from '@/components/Common/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import RoadmapVisualizer from '@/components/goals/RoadmapVisualizer';
 
 export default function Goals() {
-  const { goals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone, projects, tasks } = useProductivity();
+  const { goals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone, projects = [] } = useProductivity();
+  const { habits = [] } = useHabits();
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Yearly');
@@ -16,9 +18,9 @@ export default function Goals() {
   
   // Switcher State
   const [mainView, setMainView] = useState('list'); // 'list' | 'roadmap'
-  const [generalRoadmapFilter, setGeneralRoadmapFilter] = useState('all'); // 'all' | 'projects' | 'tasks'
+  const [generalRoadmapFilter, setGeneralRoadmapFilter] = useState('all'); // 'all' | 'projects' | 'habits'
 
-  // Combine and sort projects and tasks for the General Roadmap
+  // Combine and sort projects and habits addiction milestones for the General Roadmap
   const generalMilestones = useMemo(() => {
     let combined = [];
     if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'projects') {
@@ -30,23 +32,38 @@ export default function Goals() {
         createdAt: new Date(p.created_at || Date.now()).getTime()
       })));
     }
-    if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'tasks') {
-      combined.push(...(tasks || []).map(t => ({
-        id: t.id,
-        text: t.title || t.text || 'Unnamed Task',
-        state: t.status === 'Completed' ? 'completed' : 'active',
-        type: 'task',
-        createdAt: new Date(t.created_at || Date.now()).getTime()
-      })));
+    if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'habits') {
+      const STAGES = [
+        { name: 'Spark', days: 7, icon: '🔥' },
+        { name: 'Routine', days: 21, icon: '⚡' },
+        { name: 'Identity', days: 66, icon: '👑' },
+        { name: 'Mastery', days: 100, icon: '🏆' }
+      ];
+
+      (habits || []).forEach(h => {
+        const streak = h.currentStreak || 0;
+        STAGES.forEach((st, sIdx) => {
+          const isDone = streak >= st.days;
+          const prevDays = sIdx > 0 ? STAGES[sIdx - 1].days : 0;
+          const isActive = streak >= prevDays && streak < st.days;
+          combined.push({
+            id: `habit-${h.id}-${st.days}`,
+            text: `${st.icon} ${h.title}: ${st.name} (${streak}/${st.days}d)`,
+            state: isDone ? 'completed' : isActive ? 'active' : 'locked',
+            type: 'habit',
+            createdAt: (new Date(h.created_at || Date.now()).getTime()) + (st.days * 86400000)
+          });
+        });
+      });
     }
     // Sort by oldest first
     combined.sort((a, b) => a.createdAt - b.createdAt);
     
     // Limit to prevent huge SVG breaking
-    const limit = combined.slice(-30);
+    const limit = combined.slice(-35);
     
     return limit.map((m, idx) => ({ ...m, step: idx + 1 }));
-  }, [projects, tasks, generalRoadmapFilter]);
+  }, [projects, habits, generalRoadmapFilter]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,10 +143,10 @@ export default function Goals() {
                   Projects
                 </button>
                 <button 
-                  className={`seg-btn ${generalRoadmapFilter === 'tasks' ? 'active' : ''}`}
-                  onClick={() => setGeneralRoadmapFilter('tasks')}
+                  className={`seg-btn ${generalRoadmapFilter === 'habits' ? 'active' : ''}`}
+                  onClick={() => setGeneralRoadmapFilter('habits')}
                 >
-                  Tasks
+                  Habits Mastery
                 </button>
               </div>
             </div>
@@ -142,7 +159,7 @@ export default function Goals() {
                   goalColor="#3b82f6" 
                 />
               ) : (
-                <EmptyState icon="🛣️" title="No items to map" text="Create some tasks or projects to see them on the roadmap." />
+                <EmptyState icon="🛣️" title="No items to map" text="Create some projects or habits to see them on the roadmap." />
               )}
             </div>
           </div>

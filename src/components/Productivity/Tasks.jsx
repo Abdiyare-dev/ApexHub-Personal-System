@@ -1,28 +1,56 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProductivity } from '@/context/ProductivityContext';
 import Modal from '@/components/Common/Modal';
+import EmptyState from '@/components/ui/EmptyState';
+import RoadmapVisualizer from '@/components/goals/RoadmapVisualizer';
 
-// Extracted TaskCard out to ensure styled-jsx processes its scoped styles properly
+// Helper to determine if a task is for today
+const isToday = (dateStr) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+         d.getMonth() === now.getMonth() &&
+         d.getDate() === now.getDate();
+};
+
+// Helper to determine if a task is for this week
+const isThisWeek = (dateStr) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+  return d >= startOfWeek && d < endOfWeek;
+};
+
+// TaskCard component
 const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => {
   const [expanded, setExpanded] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({
     title: task.title || '',
     description: task.description || '',
-    dueDate: task.dueDate || ''
+    dueDate: task.dueDate || '',
+    period: task.period || 'None'
   });
 
   const isCompleted = task.status === 'Completed';
   const linkedGoal = goals.find(g => g.id === task.goalId);
+  const isDaily = task.period === 'Daily' || isToday(task.dueDate);
+  const isWeekly = task.period === 'Weekly' || task.period === 'Weekly Planner' || isThisWeek(task.dueDate);
   
   const formatDateTime = (dateStr) => {
     if (!dateStr) return { datePart: '', timePart: '', hasTime: false };
     const d = new Date(dateStr);
-    const datePart = d.toLocaleDateString();
+    const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const hasTime = dateStr.includes('T') && dateStr.length > 11;
-    const timePart = hasTime ? d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    const timePart = hasTime ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     return { datePart, timePart, hasTime };
   };
 
@@ -32,7 +60,8 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
     updateTask(task.id, {
       title: editData.title,
       description: editData.description,
-      dueDate: editData.dueDate
+      dueDate: editData.dueDate,
+      period: editData.period
     });
     setEditMode(false);
   };
@@ -56,7 +85,15 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
                 {task.title}
               </span>
               <div className="ms-task-meta">
-                <span>Tasks</span>
+                {/* Scope Badges */}
+                {isDaily ? (
+                  <span className="scope-badge daily">☀️ Daily Task</span>
+                ) : isWeekly ? (
+                  <span className="scope-badge weekly">📅 Weekly Planner</span>
+                ) : (
+                  <span className="scope-badge standard">📋 General</span>
+                )}
+
                 {task.dueDate && (
                   <span className="meta-item">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -64,13 +101,13 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
                   </span>
                 )}
                 {task.period !== 'None' && (
-                  <span className="meta-item" style={{marginLeft: '4px'}}>
+                  <span className="meta-item">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.34 15.57a10 10 0 1 0 4.3-11.53L2 6"></path></svg>
                     {task.period}
                   </span>
                 )}
                 {task.reminder && (
-                  <span className="meta-item" style={{marginLeft: '4px'}}>
+                  <span className="meta-item">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     {hasTime ? timePart : 'Reminder'}
                   </span>
@@ -80,8 +117,12 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
           </div>
           
           <div className="ms-right-cont" onClick={e => e.stopPropagation()}>
-            <button className="ms-icon-btn star">
-               <svg fill="none" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <button 
+              className="ms-icon-btn delete-quick" 
+              title="Delete task"
+              onClick={() => deleteTask(task.id)}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
           </div>
         </div>
@@ -103,14 +144,25 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
                   rows="2"
                   placeholder="Add a step or description..."
                 />
-                <input 
-                  type="datetime-local" 
-                  value={editData.dueDate} 
-                  onChange={(e) => setEditData({...editData, dueDate: e.target.value})}
-                  className="ms-input"
-                />
+                <div className="edit-row">
+                  <input 
+                    type="datetime-local" 
+                    value={editData.dueDate} 
+                    onChange={(e) => setEditData({...editData, dueDate: e.target.value})}
+                    className="ms-input"
+                  />
+                  <select 
+                    value={editData.period} 
+                    onChange={(e) => setEditData({...editData, period: e.target.value})}
+                    className="ms-input"
+                  >
+                    <option value="None">Standard</option>
+                    <option value="Daily">Daily Task</option>
+                    <option value="Weekly">Weekly Planner</option>
+                  </select>
+                </div>
                 <div className="ms-action-row">
-                  <button onClick={handleSave} className="ms-btn primary">Save</button>
+                  <button onClick={handleSave} className="ms-btn primary">Save Changes</button>
                   <button onClick={() => setEditMode(false)} className="ms-btn secondary">Cancel</button>
                 </div>
               </div>
@@ -123,7 +175,7 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
                 )}
                 {linkedGoal && (
                   <div className="ms-detail-row">
-                    <span className="goal-badge">Linked to: {linkedGoal.title}</span>
+                    <span className="goal-badge">🎯 Linked to: {linkedGoal.title}</span>
                   </div>
                 )}
                 <div className="ms-action-row split">
@@ -162,21 +214,46 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
           width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--text-muted);
           display: flex; justify-content: center; align-items: center; cursor: pointer;
           transition: 0.2s; background: transparent; color: white;
+          flex-shrink: 0;
         }
-        .ms-circle-check:hover { border-color: var(--accent-start); }
+        .ms-circle-check:hover { border-color: var(--accent-start); transform: scale(1.05); }
         .ms-circle-check.checked { background: var(--accent-start); border-color: var(--accent-start); }
 
-        .ms-task-info { display: flex; flex-direction: column; gap: 4px; }
+        .ms-task-info { display: flex; flex-direction: column; gap: 6px; }
         .ms-task-title { font-size: 0.95rem; font-weight: 500; color: var(--text-primary); }
         
-        /* Fixed Task Meta layout */
+        /* Task Meta & Badges */
         .ms-task-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); align-items: center; }
         .meta-item { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
         
+        .scope-badge {
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          letter-spacing: 0.3px;
+        }
+        .scope-badge.daily {
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
+          border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .scope-badge.weekly {
+          background: rgba(99, 102, 241, 0.15);
+          color: #818cf8;
+          border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        .scope-badge.standard {
+          background: rgba(148, 163, 184, 0.1);
+          color: var(--text-muted);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
         .ms-icon-btn {
           background: transparent; border: none; color: var(--text-muted); cursor: pointer; transition: 0.2s;
+          padding: 6px; border-radius: 6px;
         }
-        .ms-icon-btn:hover { color: var(--accent-start); }
+        .ms-icon-btn.delete-quick:hover { color: var(--accent-danger); background: rgba(244, 63, 94, 0.1); }
 
         /* Expanded Details Area */
         .ms-task-details {
@@ -186,6 +263,7 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
         }
         .ms-view-body { display: flex; flex-direction: column; gap: 12px; }
         .ms-detail-row { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); }
+        .desc-text { line-height: 1.5; color: var(--text-secondary); }
         .goal-badge { background: rgba(0,229,255,0.1); color: var(--accent-start); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
         
         .ms-action-row.split { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px; }
@@ -194,6 +272,7 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
         .ms-text-btn.danger:hover { color: var(--accent-danger); }
 
         .ms-edit-body { display: flex; flex-direction: column; gap: 10px; }
+        .edit-row { display: flex; gap: 10px; }
         .ms-input {
           width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color);
           background: var(--surface); color: var(--text-primary); font-size: 0.85rem; transition: 0.3s;
@@ -206,9 +285,9 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
         .ms-btn.secondary { background: var(--surface-high); color: var(--text-primary); border: 1px solid var(--border-color); }
         .ms-btn.primary:hover { filter: brightness(1.1); }
 
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-5px); }
+          from { opacity: 0; transform: translateY(-4px); }
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
@@ -217,14 +296,18 @@ const TaskCard = ({ task, goals, toggleTaskStatus, updateTask, deleteTask }) => 
 };
 
 export default function Tasks() {
-  const { tasks, goals, addTask, updateTaskStatus, updateTask, deleteTask } = useProductivity();
+  const { tasks = [], goals = [], addTask, updateTaskStatus, updateTask, deleteTask } = useProductivity();
+
+  // Switchers State
+  const [mainView, setMainView] = useState('list'); // 'list' | 'roadmap'
+  const [scopeFilter, setScopeFilter] = useState('all'); // 'all' | 'daily' | 'weekly'
 
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [reminder, setReminder] = useState(false);
-  const [period, setPeriod] = useState('None'); // 'Daily', 'Weekly', 'None'
+  const [period, setPeriod] = useState('None'); // 'None' | 'Daily' | 'Weekly'
   const [goalId, setGoalId] = useState('');
   
   // Modal state
@@ -244,10 +327,9 @@ export default function Tasks() {
         dueDate,
         reminder,
         period,
-        goalId: goalId === '' ? null : goalId, // uuid — never parseInt this
+        goalId: goalId === '' ? null : goalId,
         status: 'Incomplete'
       });
-      // Only discard what the user typed once the write actually succeeded.
       setTitle('');
       setDescription('');
       setDueDate('');
@@ -267,57 +349,154 @@ export default function Tasks() {
     updateTaskStatus(task.id, newStatus);
   };
 
-  const incompleteTasks = tasks.filter(t => t.status !== 'Completed');
-  const completedTasks = tasks.filter(t => t.status === 'Completed');
+  // Filter tasks based on the scope switcher
+  const filteredTasks = useMemo(() => {
+    if (scopeFilter === 'daily') {
+      return tasks.filter(t => t.period === 'Daily' || isToday(t.dueDate));
+    }
+    if (scopeFilter === 'weekly') {
+      return tasks.filter(t => t.period === 'Weekly' || t.period === 'Weekly Planner' || isThisWeek(t.dueDate));
+    }
+    return tasks;
+  }, [tasks, scopeFilter]);
+
+  const incompleteTasks = filteredTasks.filter(t => t.status !== 'Completed');
+  const completedTasks = filteredTasks.filter(t => t.status === 'Completed');
+
+  // Counts for Switcher Badges
+  const dailyCount = useMemo(() => tasks.filter(t => t.period === 'Daily' || isToday(t.dueDate)).length, [tasks]);
+  const weeklyCount = useMemo(() => tasks.filter(t => t.period === 'Weekly' || t.period === 'Weekly Planner' || isThisWeek(t.dueDate)).length, [tasks]);
+
+  // Tasks Roadmap Milestones
+  const taskMilestones = useMemo(() => {
+    return filteredTasks.map((t, idx) => ({
+      id: t.id,
+      text: t.title,
+      state: t.status === 'Completed' ? 'completed' : 'active',
+      step: idx + 1,
+      type: 'task'
+    }));
+  }, [filteredTasks]);
 
   return (
     <div className="module-container fade-in">
-      <div className="hero-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Header & Main Switcher */}
+      <div className="hero-section" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className="hero-greeting">Task Management</h2>
           <p className="hero-subtitle">Organize and execute your actionable items seamlessly.</p>
         </div>
-        <button className="create-task-btn" onClick={() => setIsModalOpen(true)}>
-           + Create Task
-        </button>
-      </div>
-
-      <div className="full-layout">
-        {/* List Areas */}
-        <div className="lists-wrapper">
-          <div className="ms-list-container">
-            <h3 className="ms-list-title" style={{color: 'var(--accent-start)'}}>To-Do ({incompleteTasks.length})</h3>
-            <div className="ms-list">
-              {incompleteTasks.length === 0 ? (
-                <p className="empty-message">You're all caught up!</p>
-              ) : (
-                incompleteTasks.map(t => <TaskCard 
-                  key={t.id} task={t} goals={goals} 
-                  toggleTaskStatus={toggleTaskStatus} 
-                  updateTask={updateTask} 
-                  deleteTask={deleteTask} 
-                />)
-              )}
-            </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Main View Switcher (List vs Roadmap) */}
+          <div className="segmented-control">
+            <button 
+              className={`seg-btn ${mainView === 'list' ? 'active' : ''}`}
+              onClick={() => setMainView('list')}
+            >
+              Task Lists
+            </button>
+            <button 
+              className={`seg-btn ${mainView === 'roadmap' ? 'active' : ''}`}
+              onClick={() => setMainView('roadmap')}
+            >
+              Execution Roadmap
+            </button>
           </div>
 
-          <div className="ms-list-container">
-            <h3 className="ms-list-title" style={{color: 'var(--accent-success)'}}>Completed ({completedTasks.length})</h3>
-            <div className="ms-list">
-              {completedTasks.length === 0 ? (
-                <p className="empty-message">No completed tasks yet.</p>
-              ) : (
-                completedTasks.map(t => <TaskCard 
-                  key={t.id} task={t} goals={goals} 
-                  toggleTaskStatus={toggleTaskStatus} 
-                  updateTask={updateTask} 
-                  deleteTask={deleteTask} 
-                />)
-              )}
+          <button className="create-task-btn" onClick={() => setIsModalOpen(true)}>
+            + Create Task
+          </button>
+        </div>
+      </div>
+
+      {/* Scope Switcher Filter Bar */}
+      <div className="scope-switcher-bar">
+        <div className="scope-pills">
+          <button 
+            className={`scope-pill ${scopeFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setScopeFilter('all')}
+          >
+            📋 All Tasks ({tasks.length})
+          </button>
+          <button 
+            className={`scope-pill ${scopeFilter === 'daily' ? 'active' : ''}`}
+            onClick={() => setScopeFilter('daily')}
+          >
+            ☀️ Daily Tasks ({dailyCount})
+          </button>
+          <button 
+            className={`scope-pill ${scopeFilter === 'weekly' ? 'active' : ''}`}
+            onClick={() => setScopeFilter('weekly')}
+          >
+            📅 Weekly Planner ({weeklyCount})
+          </button>
+        </div>
+      </div>
+
+      {/* Main View Body */}
+      {mainView === 'roadmap' ? (
+        <div className="task-roadmap-container">
+          <div className="roadmap-wrapper-card">
+            {taskMilestones.length > 0 ? (
+              <RoadmapVisualizer 
+                milestones={taskMilestones}
+                goalTitle={scopeFilter === 'daily' ? '☀️ Daily Execution Flow' : scopeFilter === 'weekly' ? '📅 Weekly Planner Flow' : '📋 All Tasks Execution Roadmap'}
+                goalColor="#06b6d4"
+              />
+            ) : (
+              <EmptyState 
+                icon="🛣️" 
+                title="No tasks in this view" 
+                text="Create tasks or change the filter above to view your execution path." 
+                actionLabel="Create Task"
+                onAction={() => setIsModalOpen(true)}
+              />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="full-layout">
+          {/* List Areas */}
+          <div className="lists-wrapper">
+            <div className="ms-list-container">
+              <h3 className="ms-list-title" style={{color: 'var(--accent-start)'}}>
+                To-Do ({incompleteTasks.length})
+              </h3>
+              <div className="ms-list">
+                {incompleteTasks.length === 0 ? (
+                  <p className="empty-message">You're all caught up for this view!</p>
+                ) : (
+                  incompleteTasks.map(t => <TaskCard 
+                    key={t.id} task={t} goals={goals} 
+                    toggleTaskStatus={toggleTaskStatus} 
+                    updateTask={updateTask} 
+                    deleteTask={deleteTask} 
+                  />)
+                )}
+              </div>
+            </div>
+
+            <div className="ms-list-container">
+              <h3 className="ms-list-title" style={{color: 'var(--accent-success)'}}>
+                Completed ({completedTasks.length})
+              </h3>
+              <div className="ms-list">
+                {completedTasks.length === 0 ? (
+                  <p className="empty-message">No completed tasks yet in this view.</p>
+                ) : (
+                  completedTasks.map(t => <TaskCard 
+                    key={t.id} task={t} goals={goals} 
+                    toggleTaskStatus={toggleTaskStatus} 
+                    updateTask={updateTask} 
+                    deleteTask={deleteTask} 
+                  />)
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Task Creation Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
@@ -332,7 +511,7 @@ export default function Tasks() {
               type="text" 
               value={title} 
               onChange={e => setTitle(e.target.value)} 
-              placeholder="e.g. Design Homepage"
+              placeholder="e.g. Design Homepage Wireframes"
               className="glowing-input"
               required
             />
@@ -342,7 +521,7 @@ export default function Tasks() {
             <textarea 
               value={description} 
               onChange={e => setDescription(e.target.value)} 
-              placeholder="Optional details..."
+              placeholder="Optional details or sub-steps..."
               className="glowing-input textarea"
               rows="2"
             />
@@ -359,11 +538,11 @@ export default function Tasks() {
               />
             </div>
             <div className="form-group" style={{ flex: 1 }}>
-              <label>Frequency</label>
+              <label>Task Scope / Frequency</label>
               <select value={period} onChange={e => setPeriod(e.target.value)} className="glowing-input">
-                <option value="None">None</option>
-                <option value="Daily">Daily</option>
-                <option value="Weekly">Weekly</option>
+                <option value="None">Standard Task</option>
+                <option value="Daily">☀️ Daily Task</option>
+                <option value="Weekly">📅 Weekly Planner Task</option>
               </select>
             </div>
           </div>
@@ -383,7 +562,7 @@ export default function Tasks() {
                 checked={reminder} 
                 onChange={e => setReminder(e.target.checked)} 
               />
-              Set Reminder
+              Set Reminder Alert
             </label>
           </div>
           {saveError && <p className="form-error">{saveError}</p>}
@@ -394,17 +573,62 @@ export default function Tasks() {
       </Modal>
 
       <style jsx>{`
+        .scope-switcher-bar {
+          margin: 18px 0 24px 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .scope-pills {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .scope-pill {
+          padding: 8px 16px;
+          border-radius: 9999px;
+          border: 1px solid var(--border-color);
+          background: var(--surface-low);
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .scope-pill:hover {
+          color: var(--text-primary);
+          border-color: rgba(0, 229, 255, 0.4);
+          transform: translateY(-1px);
+        }
+        .scope-pill.active {
+          background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(59, 130, 246, 0.2));
+          color: var(--accent-start);
+          border-color: var(--accent-start);
+          box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+        }
+
+        .task-roadmap-container {
+          margin-top: 8px;
+        }
+        .roadmap-wrapper-card {
+          background: var(--surface);
+          border: 1px solid var(--border-color);
+          border-radius: 16px;
+          padding: 24px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
         .full-layout {
-          margin-top: 24px;
+          margin-top: 8px;
         }
         .create-task-btn {
           background: linear-gradient(135deg, var(--accent-start), #0284c7);
           color: white;
           border: none;
-          padding: 12px 24px;
+          padding: 10px 20px;
           border-radius: 8px;
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           cursor: pointer;
           box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
           transition: transform 0.2s, box-shadow 0.2s;
@@ -414,7 +638,6 @@ export default function Tasks() {
           box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
         }
 
-        /* Modal uses global .modal-overlay / .modal-content from globals.css */
         .modal-header {
           display: flex;
           justify-content: space-between;
@@ -483,10 +706,6 @@ export default function Tasks() {
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

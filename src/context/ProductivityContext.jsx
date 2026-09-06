@@ -414,6 +414,29 @@ export function ProductivityProvider({ children }) {
     await syncMeta({ project_types: updated });
   };
 
+  const updateProject = async (id, updatedFields) => {
+    if (!user) return;
+    if (isMockUser) {
+      const updated = projects.map(p => p.id === id ? { ...p, ...updatedFields } : p);
+      setProjects(updated); saveLS(LS_KEYS.projects, updated); return;
+    }
+    
+    const dbProject = { ...updatedFields };
+    if (dbProject.startDate !== undefined) { dbProject.start_date = sanitizeDateOnly(dbProject.startDate); delete dbProject.startDate; }
+    if (dbProject.dueDate !== undefined) { dbProject.due_date = sanitizeTimestamp(dbProject.dueDate); delete dbProject.dueDate; }
+    if (dbProject.endDate !== undefined) { dbProject.end_date = sanitizeDateOnly(dbProject.endDate); delete dbProject.endDate; }
+    if (dbProject.projectType !== undefined) { dbProject.project_type = dbProject.projectType; delete dbProject.projectType; }
+    if (dbProject.specificGoals !== undefined) {
+      dbProject.specific_goals = Array.isArray(dbProject.specificGoals) || typeof dbProject.specificGoals === 'object'
+        ? JSON.stringify(dbProject.specificGoals)
+        : (dbProject.specificGoals || null);
+      delete dbProject.specificGoals;
+    }
+    
+    await supabase.from('projects').update(dbProject).eq('id', id);
+    await refreshProjects();
+  };
+
   const deleteProject = async (id) => {
     if (!user) return;
     if (isMockUser) {
@@ -479,7 +502,7 @@ export function ProductivityProvider({ children }) {
     <ProductivityContext.Provider value={{
       tasks, addTask, updateTaskStatus, updateTask, deleteTask,
       goals: computedGoals, addGoal, deleteGoal, addGoalMilestone, toggleGoalMilestone, deleteGoalMilestone,
-      projects, projectTypes, addProject, addProjectType, deleteProjectType, deleteProject,
+      projects, projectTypes, addProject, updateProject, addProjectType, deleteProjectType, deleteProject,
       toggleProjectComplete, addProjectTask, toggleProjectTask, deleteProjectTask
     }}>
       {children}

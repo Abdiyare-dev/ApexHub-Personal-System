@@ -18,12 +18,12 @@ export default function Goals() {
   
   // Switcher State
   const [mainView, setMainView] = useState('list'); // 'list' | 'roadmap'
-  const [generalRoadmapFilter, setGeneralRoadmapFilter] = useState('all'); // 'all' | 'projects' | 'habits'
+  const [generalRoadmapFilter, setGeneralRoadmapFilter] = useState('projects'); // 'projects' | 'habits'
 
   // Combine and sort projects and habits addiction milestones for the General Roadmap
   const generalMilestones = useMemo(() => {
     let combined = [];
-    if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'projects') {
+    if (generalRoadmapFilter === 'projects') {
       combined.push(...(projects || []).map(p => ({
         id: p.id,
         text: p.name || 'Unnamed Project',
@@ -31,8 +31,7 @@ export default function Goals() {
         type: 'project',
         createdAt: new Date(p.created_at || Date.now()).getTime()
       })));
-    }
-    if (generalRoadmapFilter === 'all' || generalRoadmapFilter === 'habits') {
+    } else if (generalRoadmapFilter === 'habits') {
       const STAGES = [
         { name: 'Spark', days: 7, icon: '🔥' },
         { name: 'Routine', days: 21, icon: '⚡' },
@@ -131,22 +130,16 @@ export default function Goals() {
             <div className="roadmap-filter-switcher">
               <div className="segmented-control small">
                 <button 
-                  className={`seg-btn ${generalRoadmapFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setGeneralRoadmapFilter('all')}
-                >
-                  All
-                </button>
-                <button 
                   className={`seg-btn ${generalRoadmapFilter === 'projects' ? 'active' : ''}`}
                   onClick={() => setGeneralRoadmapFilter('projects')}
                 >
-                  Projects
+                  📁 Projects
                 </button>
                 <button 
                   className={`seg-btn ${generalRoadmapFilter === 'habits' ? 'active' : ''}`}
                   onClick={() => setGeneralRoadmapFilter('habits')}
                 >
-                  Habits Mastery
+                  👑 Habits Mastery
                 </button>
               </div>
             </div>

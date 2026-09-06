@@ -40,6 +40,11 @@ const normalizeProject = (p) => ({
   startDate: p.start_date ?? p.startDate ?? null,
   dueDate: p.due_date ?? p.dueDate ?? null,
   isCompleted: p.is_completed ?? p.isCompleted ?? false,
+  term: p.term ?? p.project_term ?? 'short-term',
+  tasks: Array.isArray(p.tasks) ? p.tasks.map(t => ({
+    ...t,
+    category: t.category || 'normal'
+  })) : []
 });
 
 export function ProductivityProvider({ children }) {
@@ -459,11 +464,14 @@ export function ProductivityProvider({ children }) {
     await refreshProjects();
   };
 
-  const addProjectTask = async (projectId, text) => {
+  const addProjectTask = async (projectId, taskPayload) => {
     if (!user) return;
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
-    const updatedTasks = [...(project.tasks || []), { id: Date.now().toString(), text, completed: false }];
+    const newTask = typeof taskPayload === 'string'
+      ? { id: Date.now().toString(), text: taskPayload, completed: false, category: 'normal' }
+      : { id: Date.now().toString(), text: taskPayload.text, completed: false, category: taskPayload.category || 'normal' };
+    const updatedTasks = [...(project.tasks || []), newTask];
     if (isMockUser) {
       const updated = projects.map(p => p.id === projectId ? { ...p, tasks: updatedTasks } : p);
       setProjects(updated); saveLS(LS_KEYS.projects, updated); return;

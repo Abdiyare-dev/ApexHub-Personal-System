@@ -6,14 +6,20 @@
  * directly. Bump CACHE_VERSION whenever the caching rules below change.
  */
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const SHELL_CACHE = `apexhub-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `apexhub-assets-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
 
-// Kept deliberately tiny: everything else is cached lazily on first use, so a
-// missing entry here can never fail the install step.
-const SHELL_ASSETS = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
+// Essential shell assets cached during install
+const SHELL_ASSETS = [
+  OFFLINE_URL,
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-maskable-192.png",
+  "/icons/icon-maskable-512.png",
+  "/icons/apple-touch-icon.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -85,7 +91,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname === "/icon.png") {
     event.respondWith(cacheFirstAsset(request));
   }
 });

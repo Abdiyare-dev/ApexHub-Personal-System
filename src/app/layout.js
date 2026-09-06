@@ -17,6 +17,22 @@ const dancingScript = Dancing_Script({
 export const metadata = {
   title: "ApexHub - Personal Tracking System",
   description: "ApexHub - Personal tracking system for managing projects, finances, and productivity.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ApexHub"
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.png", sizes: "48x48", type: "image/png" }
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+    ]
+  }
 };
 
 // Next injects <meta name="viewport"> from this export. viewportFit: "cover"

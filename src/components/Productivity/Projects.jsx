@@ -180,29 +180,34 @@ export default function Projects() {
   // Compute Active Project Specific Roadmap Steps (Milestones)
   const activeProjectRoadmapSteps = useMemo(() => {
     if (!activeProject) return [];
-    const tasks = activeProject.tasks || [];
+    const allTasks = activeProject.tasks || [];
     
     // Filter tasks based on detail roadmap filter (Goals only vs All)
     const filtered = detailRoadmapFilter === 'goals' 
-      ? tasks.filter(t => t.category === 'goal')
-      : tasks;
+      ? allTasks.filter(t => t.category === 'goal')
+      : allTasks;
 
-    const allCompleted = filtered.length > 0 && filtered.every(t => t.completed);
-    const isProjectDone = activeProject.isCompleted || allCompleted;
+    // Strict project completion requirement: ALL tasks and goals across the project must be 100% completed
+    const hasTasks = allTasks.length > 0;
+    const allProjectTasksCompleted = hasTasks && allTasks.every(t => t.completed);
+    const isProjectFullyDone = Boolean(activeProject.isCompleted || allProjectTasksCompleted);
 
     const steps = filtered.map((t, idx) => ({
       id: t.id,
       text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
+      completed: !!t.completed,
       state: t.completed ? 'completed' : 'locked',
       step: idx + 1,
       type: t.category === 'goal' ? 'goal' : 'task'
     }));
 
     // Final terminal checkpoint of the project
+    // It should NOT reach completion until ALL goals and tasks in the project are 100% completed!
     steps.push({
       id: `${activeProject.id}-terminal-delivery`,
       text: `🏆 Final Delivery: ${activeProject.name}`,
-      state: isProjectDone ? 'completed' : allCompleted ? 'active' : 'locked',
+      completed: isProjectFullyDone,
+      state: isProjectFullyDone ? 'completed' : 'locked',
       step: steps.length + 1,
       type: 'delivery'
     });
@@ -216,10 +221,12 @@ export default function Projects() {
       return filteredProjects.map((p, idx) => {
         const tasksCount = p.tasks?.length || 0;
         const doneCount = (p.tasks || []).filter(t => t.completed).length;
-        const state = p.isCompleted ? 'completed' : doneCount > 0 ? 'active' : 'locked';
+        const allDone = tasksCount > 0 && doneCount === tasksCount;
+        const state = (p.isCompleted || allDone) ? 'completed' : doneCount > 0 ? 'active' : 'locked';
         return {
           id: p.id,
           text: `${p.name} (${doneCount}/${tasksCount} tasks)`,
+          completed: Boolean(p.isCompleted || allDone),
           state,
           step: idx + 1,
           type: 'project'
@@ -230,12 +237,14 @@ export default function Projects() {
     const curr = projects.find(p => p.id === selectedProjectId);
     if (!curr) return [];
     const tasks = curr.tasks || [];
-    const allCompleted = tasks.length > 0 && tasks.every(t => t.completed);
-    const isProjectDone = curr.isCompleted || allCompleted;
+    const hasTasks = tasks.length > 0;
+    const allProjectTasksCompleted = hasTasks && tasks.every(t => t.completed);
+    const isProjectFullyDone = Boolean(curr.isCompleted || allProjectTasksCompleted);
 
     const steps = tasks.map((t, idx) => ({
       id: t.id,
       text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
+      completed: !!t.completed,
       state: t.completed ? 'completed' : 'locked',
       step: idx + 1,
       type: t.category === 'goal' ? 'goal' : 'task'
@@ -244,7 +253,8 @@ export default function Projects() {
     steps.push({
       id: `${curr.id}-terminal-delivery`,
       text: `🏆 Final Delivery: ${curr.name}`,
-      state: isProjectDone ? 'completed' : allCompleted ? 'active' : 'locked',
+      completed: isProjectFullyDone,
+      state: isProjectFullyDone ? 'completed' : 'locked',
       step: steps.length + 1,
       type: 'delivery'
     });

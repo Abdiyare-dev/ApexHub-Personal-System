@@ -187,20 +187,27 @@ export default function Projects() {
       ? tasks.filter(t => t.category === 'goal')
       : tasks;
 
-    if (filtered.length === 0) {
-      return [
-        { id: `${activeProject.id}-start`, text: `🚀 ${activeProject.name} (Kickoff)`, state: 'completed', step: 1 },
-        { id: `${activeProject.id}-finish`, text: `🏆 Project Final Delivery`, state: activeProject.isCompleted ? 'completed' : 'active', step: 2 }
-      ];
-    }
+    const allCompleted = filtered.length > 0 && filtered.every(t => t.completed);
+    const isProjectDone = activeProject.isCompleted || allCompleted;
 
-    return filtered.map((t, idx) => ({
+    const steps = filtered.map((t, idx) => ({
       id: t.id,
       text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
       state: t.completed ? 'completed' : 'locked',
       step: idx + 1,
       type: t.category === 'goal' ? 'goal' : 'task'
     }));
+
+    // Final terminal checkpoint of the project
+    steps.push({
+      id: `${activeProject.id}-terminal-delivery`,
+      text: `🏆 Final Delivery: ${activeProject.name}`,
+      state: isProjectDone ? 'completed' : allCompleted ? 'active' : 'locked',
+      step: steps.length + 1,
+      type: 'delivery'
+    });
+
+    return steps;
   }, [activeProject, detailRoadmapFilter]);
 
   // General Portfolio Roadmap Milestones
@@ -223,19 +230,26 @@ export default function Projects() {
     const curr = projects.find(p => p.id === selectedProjectId);
     if (!curr) return [];
     const tasks = curr.tasks || [];
-    if (tasks.length === 0) {
-      return [
-        { id: `${curr.id}-start`, text: `${curr.name} (Started)`, state: 'completed', step: 1 },
-        { id: `${curr.id}-finish`, text: `${curr.name} (Delivery)`, state: curr.isCompleted ? 'completed' : 'active', step: 2 }
-      ];
-    }
-    return tasks.map((t, idx) => ({
+    const allCompleted = tasks.length > 0 && tasks.every(t => t.completed);
+    const isProjectDone = curr.isCompleted || allCompleted;
+
+    const steps = tasks.map((t, idx) => ({
       id: t.id,
       text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
       state: t.completed ? 'completed' : 'locked',
       step: idx + 1,
       type: t.category === 'goal' ? 'goal' : 'task'
     }));
+
+    steps.push({
+      id: `${curr.id}-terminal-delivery`,
+      text: `🏆 Final Delivery: ${curr.name}`,
+      state: isProjectDone ? 'completed' : allCompleted ? 'active' : 'locked',
+      step: steps.length + 1,
+      type: 'delivery'
+    });
+
+    return steps;
   }, [filteredProjects, projects, selectedProjectId]);
 
   return (

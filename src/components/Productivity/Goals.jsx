@@ -24,21 +24,31 @@ export default function Goals() {
       let combined = [];
       goals.forEach(g => {
         const milestones = g.milestones || [];
+        const allDone = milestones.length > 0 && milestones.every(m => m.completed);
+        const isGoalDone = g.completionRate === 100 || allDone;
+
         if (milestones.length === 0) {
           combined.push({
             id: `goal-${g.id}`,
-            text: `🎯 ${g.title} (In Progress)`,
-            state: g.completionRate === 100 ? 'completed' : 'active',
+            text: `🎯 ${g.title}`,
+            state: isGoalDone ? 'completed' : 'active',
             type: 'goal'
           });
         } else {
           milestones.forEach(m => {
             combined.push({
               id: m.id,
-              text: `${g.title}: ${m.text || m.title}`,
+              text: m.text || m.title || 'Step',
               state: m.completed ? 'completed' : 'locked',
               type: 'milestone'
             });
+          });
+          // Append terminal milestone for the goal
+          combined.push({
+            id: `goal-${g.id}-achieved`,
+            text: `🏆 ${g.title} (Achieved)`,
+            state: isGoalDone ? 'completed' : allDone ? 'active' : 'locked',
+            type: 'goal-completed'
           });
         }
       });
@@ -49,20 +59,34 @@ export default function Goals() {
     if (!currentGoal) return [];
 
     const milestones = currentGoal.milestones || [];
+    const allDone = milestones.length > 0 && milestones.every(m => m.completed);
+    const isGoalDone = currentGoal.completionRate === 100 || allDone;
+
     if (milestones.length === 0) {
       return [
-        { id: `${currentGoal.id}-start`, text: `🎯 ${currentGoal.title} (Kickoff)`, state: 'completed', step: 1 },
-        { id: `${currentGoal.id}-finish`, text: `🏆 Goal Objective Reached`, state: currentGoal.completionRate === 100 ? 'completed' : 'active', step: 2 }
+        { id: `${currentGoal.id}-start`, text: `🎯 ${currentGoal.title} (Started)`, state: 'completed', step: 1 },
+        { id: `${currentGoal.id}-finish`, text: `🏆 Goal Objective Reached`, state: isGoalDone ? 'completed' : 'active', step: 2 }
       ];
     }
 
-    return milestones.map((m, idx) => ({
+    const steps = milestones.map((m, idx) => ({
       id: m.id,
       text: m.text || m.title || `Milestone ${idx + 1}`,
       state: m.completed ? 'completed' : 'locked',
       step: idx + 1,
       type: 'milestone'
     }));
+
+    // Terminal Milestone Checkpoint
+    steps.push({
+      id: `${currentGoal.id}-achieved`,
+      text: `🏆 ${currentGoal.title} (Achieved)`,
+      state: isGoalDone ? 'completed' : allDone ? 'active' : 'locked',
+      step: steps.length + 1,
+      type: 'goal-completed'
+    });
+
+    return steps;
   }, [goals, selectedGoalId]);
 
   // Modal State

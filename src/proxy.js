@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-export async function middleware(request) {
+export async function proxy(request) {
   // Forward the current pathname via a request header so Server Components
   // (which have no direct access to the active route) can read it with
   // headers(). Used by (main)/layout.js to decide whether '/' should render

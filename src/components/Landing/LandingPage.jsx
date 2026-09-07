@@ -77,8 +77,104 @@ const FEATURES = [
   },
 ];
 
+const CORE_PILLARS = [
+  {
+    id: 'finance-pillar',
+    title: 'Financial Engine & Wealth',
+    subtitle: 'Reconcile cash flow, budgets, and savings goals',
+    icon: Wallet,
+    accent: '#0A84FF',
+    glow: 'rgba(10, 132, 255, 0.45)',
+    gradient: 'linear-gradient(135deg, #0A84FF 0%, #0055D4 100%)',
+    badge: 'Live Reconcile',
+    points: [
+      'Automated income & expense categorization with recurring billing detection',
+      'Smart budget health indicators with live pacing preventing monthly overruns',
+      'Milestone-based savings vault with compound progress fill rings',
+      'One-click multi-page executive PDF and styled Excel financial analytics'
+    ],
+    sample: {
+      type: 'budget',
+      title: 'Monthly Budget Health',
+      status: 'On Track',
+      spent: '$2,450',
+      total: '$3,800',
+      pct: 64,
+    }
+  },
+  {
+    id: 'productivity-pillar',
+    title: 'Productivity & Execution',
+    subtitle: 'Daily actions, habits, and weekly timeboxing',
+    icon: ListChecks,
+    accent: '#5E5CE6',
+    glow: 'rgba(94, 92, 230, 0.45)',
+    gradient: 'linear-gradient(135deg, #5E5CE6 0%, #3B38B8 100%)',
+    badge: 'High Velocity',
+    points: [
+      'Prioritized daily task execution with 1-click timetable block conversion',
+      'Habit engine with rolling 30-day streak heatmaps and optimistic sync',
+      'Dynamic 7-day recurring timetable schedule template with color-coded matrices',
+      'Unified daily focus planner with markdown reflections and mood logs'
+    ],
+    sample: {
+      type: 'habit',
+      title: 'Habit Consistency',
+      streak: '18 Days',
+      completion: '92%',
+      tag: '🔥 Active Streak',
+    }
+  },
+  {
+    id: 'roadmap-pillar',
+    title: 'Strategic Goals & Portfolios',
+    subtitle: 'Multi-stage journeys and delivery checkpoints',
+    icon: Target,
+    accent: '#BF5AF2',
+    glow: 'rgba(191, 90, 242, 0.45)',
+    gradient: 'linear-gradient(135deg, #BF5AF2 0%, #8928BA 100%)',
+    badge: 'Visual Roadmaps',
+    points: [
+      'Interactive vector roadmap paths with animated progress beacons and stage pins',
+      'Project portfolio breakdown with dedicated goal milestones and actionable sub-steps',
+      'Strict completion verification ensuring zero premature project delivery checkmarks',
+      'Periodic productivity analytics reports with comparison trend charts'
+    ],
+    sample: {
+      type: 'roadmap',
+      title: 'Project Web App',
+      stage: 'Stage 2 of 3',
+      subtext: '🎯 Back-end API Complete',
+      progress: 75,
+    }
+  },
+  {
+    id: 'platform-pillar',
+    title: 'Unified Intelligence & Mobile',
+    subtitle: 'Cross-domain analytics and standalone mobile app',
+    icon: Smartphone,
+    accent: '#30D158',
+    glow: 'rgba(48, 209, 88, 0.45)',
+    gradient: 'linear-gradient(135deg, #30D158 0%, #009944 100%)',
+    badge: 'iOS & Android PWA',
+    points: [
+      'Cross-domain convergence dashboard merging money health and task velocity',
+      'Progressive Web App (PWA) with offline caching and standalone home-screen launch',
+      'Private account scoping with Supabase Row Level Security and zero data resale',
+      'Full dark and light mode system theming tailored for desktop and mobile'
+    ],
+    sample: {
+      type: 'security',
+      title: 'Private Cloud Ledger',
+      badge: '100% Encrypted',
+      desc: 'No bank credentials required',
+      status: '● Live Sync',
+    }
+  }
+];
+
 const MODULE_CATEGORIES = [
-  { id: 'all', label: 'All Modules', icon: '✦', count: 12 },
+  { id: 'all', label: 'All Engines', icon: '✦', count: 12 },
   { id: 'productivity', label: 'Productivity Suite', icon: '⚡', count: 5 },
   { id: 'finance', label: 'Finance & Wealth', icon: '💎', count: 4 },
   { id: 'system', label: 'System & Mobile', icon: '🚀', count: 3 },
@@ -355,24 +451,45 @@ export default function LandingPage() {
         <div className="landing-progress-bar" ref={progressRef} />
       </div>
 
-      {/* ── NAV ─────────────────────────────────────────────────────── */}
-      <nav className={`landing-nav ${scrolled ? 'scrolled' : ''}`}>
-        <a href="#top" className="landing-brand" onClick={scrollToTop}>
-          <img src="/icon_logo.png" alt="ApexHub" width={32} height={32} className="landing-brand-icon" />
-          <span className="landing-brand-name">ApexHub</span>
-        </a>
-        <div className="landing-nav-actions">
-          <a href="#modules" className="landing-nav-link">Modules</a>
-          <a href="#features" className="landing-nav-link">Features</a>
-          <a href="#how" className="landing-nav-link">How it works</a>
-          <a href="#faq" className="landing-nav-link">FAQ</a>
-          <button onClick={toggleTheme} className="landing-icon-btn" aria-label="Toggle theme">
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-          <button onClick={goLogin} className="landing-btn-ghost">Sign in</button>
-          <button onClick={goLogin} className="landing-btn-primary">Try ApexHub</button>
-        </div>
-      </nav>
+      {/* ── FLOATING LIQUID FROSTED GLASS CAPSULE NAV ("ROOF") ── */}
+      <div className="landing-roof-container">
+        <nav className={`landing-liquid-nav ${scrolled ? 'scrolled' : ''}`}>
+          <a href="#top" className="landing-liquid-brand" onClick={scrollToTop}>
+            <div className="liquid-logo-frame">
+              <img src="/icon_logo.png" alt="ApexHub" width={28} height={28} className="landing-brand-icon" />
+            </div>
+            <div className="landing-brand-text-block">
+              <div className="landing-brand-title-row">
+                <span className="landing-brand-name">ApexHub</span>
+                <span className="landing-brand-pill">
+                  <span className="brand-dot" />
+                  <span>PERSONAL SYSTEM</span>
+                </span>
+              </div>
+              <span className="landing-brand-subline">Personal Development & Tracking System</span>
+            </div>
+          </a>
+
+          <div className="landing-nav-center-links">
+            <a href="#pillars" className="liquid-nav-link">Pillars</a>
+            <a href="#modules" className="liquid-nav-link">Control Center</a>
+            <a href="#features" className="liquid-nav-link">Features</a>
+            <a href="#how" className="liquid-nav-link">How It Works</a>
+            <a href="#faq" className="liquid-nav-link">FAQ</a>
+          </div>
+
+          <div className="landing-nav-actions">
+            <button onClick={toggleTheme} className="liquid-icon-btn" aria-label="Toggle theme" title="Switch Theme">
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+            <button onClick={goLogin} className="liquid-btn-ghost">Sign in</button>
+            <button onClick={goLogin} className="liquid-btn-primary">
+              <span>Try ApexHub</span>
+              <ArrowRight size={15} />
+            </button>
+          </div>
+        </nav>
+      </div>
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="landing-hero">
@@ -401,19 +518,22 @@ export default function LandingPage() {
         </TiltCard>
 
         <div className={`landing-hero-inner ${heroInView ? 'in-view' : ''}`}>
-          <span className="landing-eyebrow">Personal Development System</span>
+          <div className="landing-hero-badge-pill">
+            <span className="brand-dot" />
+            <span>APEXHUB PERSONAL DEVELOPMENT SYSTEM</span>
+          </div>
           <h1 className="landing-h1">
             One quiet place for<br />your money and your time.
           </h1>
           <p className="landing-sub">
-            ApexHub brings finance and productivity together in a single, calm
-            system — so you can plan with real numbers instead of guesswork.
+            ApexHub brings finance, daily execution, and strategic milestones into a single, calm
+            command deck — so you can plan with real numbers instead of guesswork.
           </p>
           <div className="landing-hero-actions">
             <button onClick={goLogin} className="landing-btn-primary landing-btn-lg">
               Try ApexHub <ArrowRight size={18} />
             </button>
-            <a href="#how" className="landing-btn-outline landing-btn-lg">See how it works</a>
+            <a href="#pillars" className="landing-btn-outline landing-btn-lg">Explore Core Pillars</a>
           </div>
           <div className="landing-trust-row">
             <span className="landing-trust-item"><Check size={14} /> No bank credentials</span>
@@ -472,16 +592,129 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── IPHONE CONTROL CENTER MODULES ──────────────────────────── */}
+      {/* ── 4 CORE EXECUTIVE PILLARS (GENERALIZED HIGHLIGHTS) ──────── */}
+      <section id="pillars" className="landing-section">
+        <div className={`landing-section-head ${modInView ? 'in-view' : ''}`}>
+          <div className="landing-cc-badge">
+            <span className="cc-badge-dot" />
+            <span>FOUR CORE PILLARS</span>
+          </div>
+          <h2 className="landing-h2">Four Engines. Zero Silos.</h2>
+          <p className="landing-sub center">
+            ApexHub unifies personal development into four generalized command pillars — delivering complete clarity without repetitive clutter.
+          </p>
+        </div>
+
+        {/* 2x2 Bento Grid of Core Pillars */}
+        <div className="landing-pillar-grid">
+          {CORE_PILLARS.map((pillar, i) => {
+            const PillarIcon = pillar.icon;
+            return (
+              <div 
+                key={pillar.id}
+                className={`landing-pillar-card ${modInView ? 'in-view' : ''}`}
+                style={{ 
+                  '--pillar-accent': pillar.accent,
+                  '--pillar-glow': pillar.glow,
+                  transitionDelay: `${i * 0.08}s`
+                }}
+              >
+                <div className="pillar-header-row">
+                  <div className="pillar-icon-box" style={{ background: pillar.gradient }}>
+                    <PillarIcon size={24} color="#ffffff" />
+                  </div>
+                  <div className="pillar-header-text">
+                    <div className="pillar-title-wrap">
+                      <h3 className="pillar-title">{pillar.title}</h3>
+                      <span className="pillar-badge" style={{ color: pillar.accent, background: `${pillar.accent}16`, borderColor: `${pillar.accent}35` }}>
+                        {pillar.badge}
+                      </span>
+                    </div>
+                    <p className="pillar-subtitle">{pillar.subtitle}</p>
+                  </div>
+                </div>
+
+                {/* Key Bullet Points */}
+                <div className="pillar-points-list">
+                  {pillar.points.map((pt, idx) => (
+                    <div key={idx} className="pillar-point-item">
+                      <div className="point-bullet" style={{ background: pillar.accent }} />
+                      <span className="point-text">{pt}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Live Sample Control Center Widget Preview */}
+                <div className="pillar-sample-preview">
+                  <div className="sample-widget-header">
+                    <span className="sample-tag">LIVE CAPABILITY SAMPLE</span>
+                    <span className="sample-status-pill">{pillar.sample.status || pillar.sample.tag || 'Active'}</span>
+                  </div>
+                  
+                  {pillar.sample.type === 'budget' && (
+                    <div className="sample-budget-content">
+                      <div className="sbc-row">
+                        <span className="sbc-title">{pillar.sample.title}</span>
+                        <span className="sbc-val">{pillar.sample.spent} / {pillar.sample.total}</span>
+                      </div>
+                      <div className="sbc-track">
+                        <div className="sbc-fill" style={{ width: `${pillar.sample.pct}%`, background: pillar.gradient }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {pillar.sample.type === 'habit' && (
+                    <div className="sample-habit-content">
+                      <div className="shc-row">
+                        <div>
+                          <div className="shc-title">{pillar.sample.title}</div>
+                          <div className="shc-sub">{pillar.sample.tag}</div>
+                        </div>
+                        <div className="shc-streak">{pillar.sample.streak}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {pillar.sample.type === 'roadmap' && (
+                    <div className="sample-roadmap-content">
+                      <div className="src-row">
+                        <span className="src-stage">{pillar.sample.stage}</span>
+                        <span className="src-sub">{pillar.sample.subtext}</span>
+                      </div>
+                      <div className="src-track">
+                        <div className="src-fill" style={{ width: `${pillar.sample.progress}%`, background: pillar.gradient }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {pillar.sample.type === 'security' && (
+                    <div className="sample-sec-content">
+                      <div className="ssc-row">
+                        <div>
+                          <div className="ssc-title">{pillar.sample.title}</div>
+                          <div className="ssc-desc">{pillar.sample.desc}</div>
+                        </div>
+                        <span className="ssc-badge">{pillar.sample.badge}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── IPHONE CONTROL CENTER MODULE EXPLORER ──────────────────── */}
       <section ref={modRef} id="modules" className="landing-section">
         <div className={`landing-section-head ${modInView ? 'in-view' : ''}`}>
           <div className="landing-cc-badge">
             <span className="cc-badge-dot" />
             <span>CONTROL CENTER SYSTEM</span>
           </div>
-          <h2 className="landing-h2">Unified Command Deck.</h2>
+          <h2 className="landing-h2">Explore Specialized Engines.</h2>
           <p className="landing-sub center">
-            Twelve specialized engines configured into an intuitive, iPhone Control Center inspired glass workspace.
+            Interact with the twelve integrated tools configured into the iPhone Control Center glass command deck.
           </p>
 
           {/* iOS Control Center Category Switcher */}
@@ -722,76 +955,254 @@ export default function LandingPage() {
           transition: width 0.1s linear;
         }
 
-        /* ── Nav ── */
-        .landing-nav {
-          position: sticky;
-          top: 0;
-          z-index: 200;
+        /* ── FLOATING LIQUID FROSTED GLASS CAPSULE NAV ("ROOF") ── */
+        .landing-roof-container {
+          position: fixed;
+          top: 16px;
+          left: 0;
+          right: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 250;
+          padding: 0 16px;
+          pointer-events: none;
+        }
+        .landing-liquid-nav {
+          pointer-events: auto;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 18px 40px;
-          background: transparent;
-          border-bottom: 1px solid transparent;
-          transition: background 0.3s ease, border-color 0.3s ease;
+          gap: 20px;
+          width: 100%;
+          max-width: 1140px;
+          padding: 8px 14px 8px 16px;
+          border-radius: 100px;
+          background: rgba(255, 255, 255, 0.72);
+          border: 1px solid rgba(255, 255, 255, 0.65);
+          box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(28px) saturate(180%);
+          -webkit-backdrop-filter: blur(28px) saturate(180%);
+          transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .landing-nav.scrolled {
-          background: var(--bg-topnav);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border-bottom-color: var(--border);
+        :global(.dark) .landing-liquid-nav {
+          background: rgba(15, 23, 42, 0.76);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.2);
         }
-        .landing-brand {
+        .landing-liquid-nav.scrolled {
+          background: rgba(255, 255, 255, 0.88);
+          box-shadow: 0 24px 54px -8px rgba(0, 0, 0, 0.18), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+          transform: translateY(2px) scale(0.995);
+        }
+        :global(.dark) .landing-liquid-nav.scrolled {
+          background: rgba(11, 18, 33, 0.88);
+          box-shadow: 0 28px 60px -8px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+        }
+
+        .landing-liquid-brand {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           text-decoration: none;
-          transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+          color: var(--text-primary);
+          flex-shrink: 0;
+          transition: transform 0.25s ease;
         }
-        .landing-brand:hover { transform: translateY(-1px); }
+        .landing-liquid-brand:hover {
+          transform: scale(1.02);
+        }
+        .liquid-logo-frame {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(0, 85, 212, 0.2));
+          border: 1px solid rgba(10, 132, 255, 0.35);
+          box-shadow: 0 0 14px rgba(10, 132, 255, 0.3);
+          overflow: hidden;
+        }
         .landing-brand-icon {
-          border-radius: 8px;
-          box-shadow: 0 0 12px var(--accent-glow);
+          border-radius: 6px;
         }
-        .landing-brand-icon.muted { box-shadow: none; filter: grayscale(100%) opacity(0.7); }
+        .landing-brand-text-block {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+        }
+        .landing-brand-title-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          line-height: 1.1;
+        }
         .landing-brand-name {
-          font-weight: 800;
-          font-size: 1.1rem;
-          letter-spacing: -0.4px;
-          background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+          font-weight: 900;
+          font-size: 1.15rem;
+          letter-spacing: -0.5px;
+          background: linear-gradient(135deg, #0A84FF 0%, #0055D4 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        .landing-nav-actions { display: flex; align-items: center; gap: 8px; }
-        .landing-nav-link {
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 0.9rem;
+        :global(.dark) .landing-brand-name {
+          background: linear-gradient(135deg, #64D2FF 0%, #0A84FF 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .landing-brand-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 2px 7px;
+          border-radius: 100px;
+          background: rgba(10, 132, 255, 0.1);
+          border: 1px solid rgba(10, 132, 255, 0.25);
+          color: #0A84FF;
+          font-size: 0.62rem;
+          font-weight: 800;
+          letter-spacing: 0.6px;
+        }
+        :global(.dark) .landing-brand-pill {
+          background: rgba(100, 210, 255, 0.12);
+          border-color: rgba(100, 210, 255, 0.28);
+          color: #64D2FF;
+        }
+        .brand-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: #0A84FF;
+          box-shadow: 0 0 6px #0A84FF;
+        }
+        :global(.dark) .brand-dot {
+          background: #64D2FF;
+          box-shadow: 0 0 6px #64D2FF;
+        }
+        .landing-brand-subline {
+          font-size: 0.68rem;
           font-weight: 600;
+          color: var(--text-muted);
+          letter-spacing: 0.1px;
+          margin-top: 1px;
+        }
+
+        .landing-nav-center-links {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .liquid-nav-link {
+          padding: 7px 14px;
+          border-radius: 100px;
+          font-size: 0.86rem;
+          font-weight: 700;
           color: var(--text-secondary);
           text-decoration: none;
-          transition: var(--transition-fast);
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .landing-nav-link:hover { color: var(--accent); background: var(--accent-subtle); }
-        .landing-icon-btn {
-          display: flex; align-items: center; justify-content: center;
-          width: 38px; height: 38px;
-          border-radius: 10px;
+        .liquid-nav-link:hover {
+          color: var(--text-primary);
+          background: rgba(148, 163, 184, 0.14);
+          transform: translateY(-1px);
+        }
+
+        .landing-nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        .liquid-icon-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: 1px solid var(--border-color);
+          background: rgba(255, 255, 255, 0.4);
           color: var(--text-secondary);
-          transition: var(--transition-fast);
+          cursor: pointer;
+          transition: all 0.25s ease;
         }
-        .landing-icon-btn:hover { background: var(--accent-subtle); color: var(--accent); }
-        .landing-btn-ghost {
-          padding: 9px 18px;
+        :global(.dark) .liquid-icon-btn {
+          background: rgba(255, 255, 255, 0.06);
+        }
+        .liquid-icon-btn:hover {
+          background: rgba(148, 163, 184, 0.22);
+          color: var(--accent);
+          transform: rotate(15deg);
+        }
+        .liquid-btn-ghost {
+          padding: 8px 16px;
           border-radius: 100px;
           border: 1px solid var(--border-color);
-          color: var(--text-secondary);
-          font-size: 0.9rem;
-          font-weight: 600;
-          transition: var(--transition-fast);
+          background: transparent;
+          color: var(--text-primary);
+          font-size: 0.86rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.25s ease;
         }
-        .landing-btn-ghost:hover { color: var(--text-primary); border-color: var(--accent); }
+        .liquid-btn-ghost:hover {
+          border-color: var(--accent);
+          background: var(--accent-subtle);
+          color: var(--accent);
+        }
+        .liquid-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 18px;
+          border-radius: 100px;
+          border: none;
+          background: linear-gradient(135deg, #0A84FF 0%, #0055D4 100%);
+          color: #ffffff;
+          font-size: 0.86rem;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow: 0 4px 16px rgba(10, 132, 255, 0.4);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .liquid-btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(10, 132, 255, 0.55);
+        }
+
+        /* ── Hero ── */
+        .landing-hero {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 130px 24px 60px;
+          text-align: center;
+        }
+        .landing-hero-badge-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 18px;
+          border-radius: 100px;
+          background: rgba(10, 132, 255, 0.1);
+          border: 1px solid rgba(10, 132, 255, 0.3);
+          color: #0A84FF;
+          font-size: 0.76rem;
+          font-weight: 800;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          margin-bottom: 24px;
+          box-shadow: 0 4px 16px rgba(10, 132, 255, 0.15);
+        }
+        :global(.dark) .landing-hero-badge-pill {
+          color: #64D2FF;
+          background: rgba(100, 210, 255, 0.12);
+          border-color: rgba(100, 210, 255, 0.3);
+        }
         .landing-btn-primary {
           display: inline-flex;
           align-items: center;
@@ -821,16 +1232,6 @@ export default function LandingPage() {
         }
         .landing-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
         .landing-btn-lg { padding: 15px 32px; font-size: 1rem; }
-
-        /* ── Hero ── */
-        .landing-hero {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 96px 24px 60px;
-          text-align: center;
-        }
         .landing-hero-inner {
           max-width: 720px;
           opacity: 0;
@@ -1022,6 +1423,275 @@ export default function LandingPage() {
           transition: opacity 0.8s ease, transform 0.8s ease;
         }
         .landing-section-head.in-view { opacity: 1; transform: translateY(0); }
+
+        /* ── 4 CORE EXECUTIVE PILLARS (2x2 BENTO GRID) ── */
+        .landing-pillar-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 24px;
+          margin-bottom: 20px;
+        }
+        .landing-pillar-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 32px;
+          border-radius: 24px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-card);
+          box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(28px);
+          -webkit-backdrop-filter: blur(28px);
+          position: relative;
+          overflow: hidden;
+          opacity: 0;
+          transform: translateY(24px);
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease, opacity 0.7s ease;
+        }
+        .landing-pillar-card.in-view {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .landing-pillar-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 260px;
+          height: 260px;
+          border-radius: 50%;
+          background: radial-gradient(circle, var(--pillar-glow), transparent 70%);
+          opacity: 0.12;
+          pointer-events: none;
+          transition: opacity 0.35s ease;
+        }
+        .landing-pillar-card:hover {
+          transform: translateY(-6px);
+          border-color: var(--pillar-accent);
+          box-shadow: 0 24px 56px -12px var(--pillar-glow), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+        .landing-pillar-card:hover::before {
+          opacity: 0.25;
+        }
+
+        .pillar-header-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 18px;
+          margin-bottom: 22px;
+        }
+        .pillar-icon-box {
+          width: 52px;
+          height: 52px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 8px 24px var(--pillar-glow);
+          transition: transform 0.3s ease;
+        }
+        .landing-pillar-card:hover .pillar-icon-box {
+          transform: scale(1.08) rotate(-3deg);
+        }
+        .pillar-header-text {
+          text-align: left;
+          flex: 1;
+        }
+        .pillar-title-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 4px;
+          flex-wrap: wrap;
+        }
+        .pillar-title {
+          font-size: 1.25rem;
+          font-weight: 800;
+          letter-spacing: -0.4px;
+          color: var(--text-primary);
+          margin: 0;
+        }
+        .pillar-badge {
+          font-size: 0.72rem;
+          font-weight: 800;
+          padding: 4px 10px;
+          border-radius: 100px;
+          border: 1px solid;
+          letter-spacing: 0.4px;
+          text-transform: uppercase;
+        }
+        .pillar-subtitle {
+          font-size: 0.88rem;
+          color: var(--text-secondary);
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        .pillar-points-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 24px;
+          text-align: left;
+        }
+        .pillar-point-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .point-bullet {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          margin-top: 6px;
+          box-shadow: 0 0 8px var(--pillar-accent);
+        }
+        .point-text {
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+        }
+
+        /* ── Pillar Live Capability Preview Widget ── */
+        .pillar-sample-preview {
+          padding: 16px 20px;
+          border-radius: 18px;
+          background: rgba(148, 163, 184, 0.08);
+          border: 1px solid var(--border);
+          text-align: left;
+        }
+        .sample-widget-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+        .sample-tag {
+          font-size: 0.68rem;
+          font-weight: 800;
+          letter-spacing: 0.8px;
+          color: var(--text-muted);
+          text-transform: uppercase;
+        }
+        .sample-status-pill {
+          display: inline-block;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 100px;
+          background: rgba(16, 185, 129, 0.14);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .sample-budget-content .sbc-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .sbc-title {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .sbc-val {
+          font-size: 0.84rem;
+          font-weight: 800;
+          color: var(--text-secondary);
+        }
+        .sbc-track {
+          width: 100%;
+          height: 8px;
+          border-radius: 4px;
+          background: rgba(148, 163, 184, 0.2);
+          overflow: hidden;
+        }
+        .sbc-fill {
+          height: 100%;
+          border-radius: 4px;
+          box-shadow: 0 0 10px var(--pillar-accent);
+        }
+
+        .sample-habit-content .shc-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .shc-title {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .shc-sub {
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: #FF9F0A;
+          margin-top: 2px;
+        }
+        .shc-streak {
+          font-size: 1.15rem;
+          font-weight: 900;
+          color: #FF375F;
+          letter-spacing: -0.3px;
+        }
+
+        .sample-roadmap-content .src-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .src-stage {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .src-sub {
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+        .src-track {
+          width: 100%;
+          height: 8px;
+          border-radius: 4px;
+          background: rgba(148, 163, 184, 0.2);
+          overflow: hidden;
+        }
+        .src-fill {
+          height: 100%;
+          border-radius: 4px;
+          box-shadow: 0 0 10px var(--pillar-accent);
+        }
+
+        .sample-sec-content .ssc-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .ssc-title {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .ssc-desc {
+          font-size: 0.78rem;
+          color: var(--text-muted);
+          margin-top: 2px;
+        }
+        .ssc-badge {
+          font-size: 0.74rem;
+          font-weight: 800;
+          padding: 4px 10px;
+          border-radius: 100px;
+          background: rgba(48, 209, 88, 0.14);
+          color: #30D158;
+          border: 1px solid rgba(48, 209, 88, 0.3);
+        }
 
         /* ── iOS Control Center Modules Section ── */
         .landing-cc-badge {
@@ -1543,13 +2213,18 @@ export default function LandingPage() {
         @media (max-width: 1280px) {
           .landing-float-outer { display: none; }
         }
-        @media (max-width: 900px) {
-          .landing-nav-link { display: none; }
+        @media (max-width: 960px) {
+          .landing-nav-center-links { display: none; }
+          .landing-pillar-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
-          .landing-nav { padding: 14px 20px; }
-          .landing-hero { padding: 76px 18px 40px; }
-          .landing-section { padding: 72px 18px; }
+          .landing-roof-container { top: 10px; padding: 0 10px; }
+          .landing-liquid-nav { padding: 6px 10px 6px 12px; gap: 10px; }
+          .landing-brand-subline { display: none; }
+          .landing-hero { padding: 100px 18px 40px; }
+          .landing-section { padding: 64px 18px; }
+          .landing-pillar-card { padding: 22px 18px; }
+          .pillar-title-wrap { flex-direction: column; align-items: flex-start; gap: 6px; }
           .landing-cta-band { margin: 0 16px 72px; padding: 56px 20px; }
           .landing-kpi-grid { grid-template-columns: 1fr; }
           .landing-footer { padding: 24px 20px; justify-content: center; text-align: center; }

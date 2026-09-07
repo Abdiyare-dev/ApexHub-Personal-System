@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import {
   Wallet, ListChecks, BarChart3, ShieldCheck, ArrowRight, Moon, Sun,
   Target, Calendar, PiggyBank, FileText, Smartphone, TrendingUp,
-  ChevronDown, Check, Repeat, Layers, Receipt,
+  ChevronDown, Check, Repeat, Layers, Receipt, Sparkles,
 } from 'lucide-react';
 
 // Fade a section in the first time it scrolls into view.
@@ -77,19 +77,187 @@ const FEATURES = [
   },
 ];
 
+const MODULE_CATEGORIES = [
+  { id: 'all', label: 'All Modules', icon: '✦', count: 12 },
+  { id: 'productivity', label: 'Productivity Suite', icon: '⚡', count: 5 },
+  { id: 'finance', label: 'Finance & Wealth', icon: '💎', count: 4 },
+  { id: 'system', label: 'System & Mobile', icon: '🚀', count: 3 },
+];
+
 const MODULES = [
-  { icon: Receipt, label: 'Cash In & Expenses', desc: 'Every entry, categorized' },
-  { icon: Wallet, label: 'Budgets', desc: 'Weekly, monthly, yearly' },
-  { icon: PiggyBank, label: 'Savings Goals', desc: 'Contribute and track' },
-  { icon: ListChecks, label: 'Tasks', desc: 'Daily execution' },
-  { icon: Repeat, label: 'Habits', desc: 'Streaks and logs' },
-  { icon: Target, label: 'Goals & Milestones', desc: 'Long-range progress' },
-  { icon: Calendar, label: 'Timetable', desc: 'Import and convert to tasks' },
-  { icon: Layers, label: 'Projects', desc: 'Group the bigger work' },
-  { icon: FileText, label: 'Reports & Export', desc: 'PDF and Excel output' },
-  { icon: TrendingUp, label: 'Analytics', desc: 'Unified dashboard' },
-  { icon: Smartphone, label: 'Installable App', desc: 'Works as a PWA' },
-  { icon: ShieldCheck, label: 'Private Account', desc: 'Your data, your login' },
+  // Finance
+  {
+    id: 'cash-flow',
+    icon: Receipt,
+    label: 'Cash In & Expenses',
+    desc: 'Instant income & expense entry with automatic smart categorizations',
+    category: 'finance',
+    categoryName: 'Finance',
+    gradient: 'linear-gradient(135deg, #0A84FF 0%, #0055D4 100%)',
+    glow: 'rgba(10, 132, 255, 0.45)',
+    accent: '#0A84FF',
+    badge: 'Live Reconcile',
+    status: 'Real-time',
+    highlight: 'Instant categorized transactions with recurring inflow & outflow tracking.',
+  },
+  {
+    id: 'budgets',
+    icon: Wallet,
+    label: 'Smart Budgets',
+    desc: 'Category spending caps with executive health status indicators',
+    category: 'finance',
+    categoryName: 'Finance',
+    gradient: 'linear-gradient(135deg, #30D158 0%, #1B8A38 100%)',
+    glow: 'rgba(48, 209, 88, 0.45)',
+    accent: '#30D158',
+    badge: 'Pacing Alerts',
+    status: 'Tracking',
+    highlight: 'Period pacing thresholds and health pills preventing budget overruns.',
+  },
+  {
+    id: 'savings',
+    icon: PiggyBank,
+    label: 'Savings Vault',
+    desc: 'Milestone-based deposits with visual progress fill rings',
+    category: 'finance',
+    categoryName: 'Finance',
+    gradient: 'linear-gradient(135deg, #FF9F0A 0%, #D97706 100%)',
+    glow: 'rgba(255, 159, 10, 0.45)',
+    accent: '#FF9F0A',
+    badge: 'Goal Vault',
+    status: 'Milestones',
+    highlight: 'Automated compound deposit history and milestone target projections.',
+  },
+  {
+    id: 'reports',
+    icon: FileText,
+    label: 'Executive Reports',
+    desc: 'One-click multi-page PDF & styled Excel analytics exports',
+    category: 'finance',
+    categoryName: 'Finance',
+    gradient: 'linear-gradient(135deg, #64D2FF 0%, #0091FF 100%)',
+    glow: 'rgba(100, 210, 255, 0.45)',
+    accent: '#64D2FF',
+    badge: 'PDF & XLSX',
+    status: 'Export Ready',
+    highlight: 'Multi-sheet styled workbooks and periodic comparison chart summaries.',
+  },
+
+  // Productivity
+  {
+    id: 'tasks',
+    icon: ListChecks,
+    label: 'Execution Tasks',
+    desc: 'Prioritized daily workflow with one-click timetable conversion',
+    category: 'productivity',
+    categoryName: 'Productivity',
+    gradient: 'linear-gradient(135deg, #5E5CE6 0%, #3B38B8 100%)',
+    glow: 'rgba(94, 92, 230, 0.45)',
+    accent: '#5E5CE6',
+    badge: 'Kanban + Matrix',
+    status: 'High Velocity',
+    highlight: 'Directly convert timetable blocks into prioritized actionable tasks.',
+  },
+  {
+    id: 'habits',
+    icon: Repeat,
+    label: 'Habit Engine',
+    desc: 'Streak tracking with automated consistency heatmaps and logs',
+    category: 'productivity',
+    categoryName: 'Productivity',
+    gradient: 'linear-gradient(135deg, #FF375F 0%, #C41C40 100%)',
+    glow: 'rgba(255, 55, 95, 0.45)',
+    accent: '#FF375F',
+    badge: 'Streaks Heatmap',
+    status: 'Daily Sync',
+    highlight: 'Optimistic streak check-in with rolling 30-day interactive history grid.',
+  },
+  {
+    id: 'goals',
+    icon: Target,
+    label: 'Goals & Milestones',
+    desc: 'Multi-stage visual journey roadmaps with checkpoint pins',
+    category: 'productivity',
+    categoryName: 'Productivity',
+    gradient: 'linear-gradient(135deg, #BF5AF2 0%, #8928BA 100%)',
+    glow: 'rgba(191, 90, 242, 0.45)',
+    accent: '#BF5AF2',
+    badge: 'Visual Roadmaps',
+    status: 'Long-range',
+    highlight: 'Animated vector progression with active beacon checkpoints.',
+  },
+  {
+    id: 'timetable',
+    icon: Calendar,
+    label: 'Dynamic Timetable',
+    desc: 'Weekly schedule template with automated task conversion',
+    category: 'productivity',
+    categoryName: 'Productivity',
+    gradient: 'linear-gradient(135deg, #00C7BE 0%, #00827C 100%)',
+    glow: 'rgba(0, 199, 190, 0.45)',
+    accent: '#00C7BE',
+    badge: 'Auto Convert',
+    status: '7-Day View',
+    highlight: 'Color-coded weekly timeboxing matrices with instant task pushers.',
+  },
+  {
+    id: 'projects',
+    icon: Layers,
+    label: 'Project Portfolios',
+    desc: 'Detailed roadmaps, task breakdowns, and performance analytics',
+    category: 'productivity',
+    categoryName: 'Productivity',
+    gradient: 'linear-gradient(135deg, #FF6482 0%, #E0244D 100%)',
+    glow: 'rgba(255, 100, 130, 0.45)',
+    accent: '#FF6482',
+    badge: 'Full Stages',
+    status: 'Active Track',
+    highlight: 'Terminal delivery tracking ensuring all project goals are fulfilled.',
+  },
+
+  // System & Mobile
+  {
+    id: 'analytics',
+    icon: TrendingUp,
+    label: 'Unified Intelligence',
+    desc: 'Convergence dashboard merging financial health & task velocity',
+    category: 'system',
+    categoryName: 'Intelligence',
+    gradient: 'linear-gradient(135deg, #FF453A 0%, #B8281E 100%)',
+    glow: 'rgba(255, 69, 58, 0.45)',
+    accent: '#FF453A',
+    badge: 'Cross-Domain KPI',
+    status: 'Real-time',
+    highlight: 'Holistic executive charts merging finance health and productivity output.',
+  },
+  {
+    id: 'pwa',
+    icon: Smartphone,
+    label: 'Native Mobile PWA',
+    desc: 'Installable app with offline support and standalone iOS/Android UI',
+    category: 'system',
+    categoryName: 'Platform',
+    gradient: 'linear-gradient(135deg, #32ADE6 0%, #0077A6 100%)',
+    glow: 'rgba(50, 173, 230, 0.45)',
+    accent: '#32ADE6',
+    badge: 'iOS & Android',
+    status: 'Offline Ready',
+    highlight: 'Zero app-store friction, instantaneous home-screen launch with service workers.',
+  },
+  {
+    id: 'privacy',
+    icon: ShieldCheck,
+    label: 'Private Cloud Vault',
+    desc: 'Encrypted personal data scoped strictly to your authenticated login',
+    category: 'system',
+    categoryName: 'Security',
+    gradient: 'linear-gradient(135deg, #30D158 0%, #009944 100%)',
+    glow: 'rgba(48, 209, 88, 0.45)',
+    accent: '#30D158',
+    badge: '100% Private',
+    status: 'Encrypted',
+    highlight: 'Supabase Row Level Security scoping data exclusively to your account.',
+  },
 ];
 
 const STEPS = [
@@ -165,6 +333,14 @@ export default function LandingPage() {
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
+
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [selectedModule, setSelectedModule] = useState(MODULES[0]);
+
+  const filteredModules = useMemo(() => {
+    if (activeCategory === 'all') return MODULES;
+    return MODULES.filter(m => m.category === activeCategory);
+  }, [activeCategory]);
 
   const goLogin = () => router.push('/login');
 
@@ -296,33 +472,109 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── MODULES ─────────────────────────────────────────────────── */}
+      {/* ── IPHONE CONTROL CENTER MODULES ──────────────────────────── */}
       <section ref={modRef} id="modules" className="landing-section">
         <div className={`landing-section-head ${modInView ? 'in-view' : ''}`}>
-          <p className="landing-eyebrow center">Inside the system</p>
-          <h2 className="landing-h2">Twelve modules, one workspace.</h2>
+          <div className="landing-cc-badge">
+            <span className="cc-badge-dot" />
+            <span>CONTROL CENTER SYSTEM</span>
+          </div>
+          <h2 className="landing-h2">Unified Command Deck.</h2>
           <p className="landing-sub center">
-            Each part of ApexHub feeds the same dashboard, so nothing lives in a silo.
+            Twelve specialized engines configured into an intuitive, iPhone Control Center inspired glass workspace.
           </p>
+
+          {/* iOS Control Center Category Switcher */}
+          <div className="ios-cc-switcher">
+            {MODULE_CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                className={`ios-cc-tab ${activeCategory === cat.id ? 'active' : ''}`}
+                onClick={() => setActiveCategory(cat.id)}
+              >
+                <span className="ios-cc-tab-icon">{cat.icon}</span>
+                <span className="ios-cc-tab-label">{cat.label}</span>
+                <span className="ios-cc-tab-count">{cat.count}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="landing-module-grid">
-          {MODULES.map((m, i) => {
+
+        {/* iOS Control Center Grid */}
+        <div className="ios-cc-grid">
+          {filteredModules.map((m, i) => {
             const Icon = m.icon;
+            const isSelected = selectedModule?.id === m.id;
             return (
               <div
-                key={m.label}
-                className={`landing-module-card ${modInView ? 'in-view' : ''}`}
-                style={{ transitionDelay: `${(i % 6) * 0.06}s` }}
+                key={m.id}
+                className={`ios-cc-tile ${modInView ? 'in-view' : ''} ${isSelected ? 'selected' : ''}`}
+                style={{ 
+                  '--tile-accent': m.accent,
+                  '--tile-glow': m.glow,
+                  '--tile-gradient': m.gradient,
+                  transitionDelay: `${(i % 6) * 0.05}s` 
+                }}
+                onClick={() => setSelectedModule(m)}
+                onMouseEnter={() => setSelectedModule(m)}
               >
-                <div className="landing-module-icon"><Icon size={18} /></div>
-                <div>
-                  <div className="landing-module-label">{m.label}</div>
-                  <div className="landing-module-desc">{m.desc}</div>
+                <div className="ios-cc-tile-top">
+                  <div className="ios-cc-icon-box" style={{ background: m.gradient }}>
+                    <Icon size={22} className="ios-cc-icon" />
+                  </div>
+                  <div className="ios-cc-pill-badge">
+                    <span className="ios-cc-status-dot" style={{ background: m.accent, boxShadow: `0 0 8px ${m.accent}` }} />
+                    <span>{m.status}</span>
+                  </div>
+                </div>
+
+                <div className="ios-cc-tile-body">
+                  <div className="ios-cc-tile-title-row">
+                    <h3 className="ios-cc-tile-title">{m.label}</h3>
+                    <span className="ios-cc-tile-badge">{m.badge}</span>
+                  </div>
+                  <p className="ios-cc-tile-desc">{m.desc}</p>
+                </div>
+
+                <div className="ios-cc-tile-footer">
+                  <span className="ios-cc-category-chip">{m.categoryName}</span>
+                  <div className="ios-cc-toggle-indicator">
+                    <span className="ios-cc-switch-knob" />
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* iOS Control Center Spotlight Bar */}
+        {selectedModule && (
+          <div className="ios-cc-spotlight-bar fade-in">
+            <div className="ios-cc-spotlight-left">
+              <div className="ios-cc-spotlight-icon" style={{ background: selectedModule.gradient }}>
+                {(() => {
+                  const SelIcon = selectedModule.icon;
+                  return <SelIcon size={24} color="#ffffff" />;
+                })()}
+              </div>
+              <div>
+                <div className="ios-cc-spotlight-header">
+                  <span className="ios-cc-spotlight-tag">{selectedModule.categoryName} Engine</span>
+                  <span className="ios-cc-spotlight-subdot">•</span>
+                  <span className="ios-cc-spotlight-active">Active in Workspace</span>
+                </div>
+                <h4 className="ios-cc-spotlight-title">{selectedModule.label}</h4>
+                <p className="ios-cc-spotlight-desc">{selectedModule.highlight}</p>
+              </div>
+            </div>
+            <div className="ios-cc-spotlight-right">
+              <button onClick={goLogin} className="ios-cc-spotlight-btn">
+                Launch in Workspace <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── FEATURES ─────────────────────────────────────────────────── */}
@@ -771,42 +1023,361 @@ export default function LandingPage() {
         }
         .landing-section-head.in-view { opacity: 1; transform: translateY(0); }
 
-        /* ── Modules ── */
-        .landing-module-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 14px;
+        /* ── iOS Control Center Modules Section ── */
+        .landing-cc-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 18px;
+          border-radius: 100px;
+          background: rgba(10, 132, 255, 0.12);
+          border: 1px solid rgba(10, 132, 255, 0.32);
+          color: #0A84FF;
+          font-size: 0.76rem;
+          font-weight: 800;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 16px rgba(10, 132, 255, 0.18);
         }
-        .landing-module-card {
-          display: flex;
-          align-items: flex-start;
-          gap: 14px;
-          padding: 18px;
-          border-radius: 14px;
+        .cc-badge-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #0A84FF;
+          box-shadow: 0 0 10px #0A84FF;
+          animation: pulseDot 2s infinite ease-in-out;
+        }
+        @keyframes pulseDot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.35; transform: scale(0.8); }
+        }
+
+        /* ── iOS Control Center Filter Switcher ── */
+        .ios-cc-switcher {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px;
+          border-radius: 100px;
           background: var(--bg-card);
           border: 1px solid var(--border-card);
+          box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(28px);
+          -webkit-backdrop-filter: blur(28px);
+          margin-top: 16px;
+          max-width: 100%;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .ios-cc-switcher::-webkit-scrollbar { display: none; }
+        .ios-cc-tab {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 18px;
+          border-radius: 100px;
+          border: 1px solid transparent;
+          background: transparent;
+          color: var(--text-secondary);
+          font-size: 0.88rem;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ios-cc-tab:hover {
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .ios-cc-tab.active {
+          background: linear-gradient(135deg, #0A84FF, #0055D4);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.25);
+          box-shadow: 0 4px 18px rgba(10, 132, 255, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+          transform: scale(1.02);
+        }
+        .ios-cc-tab-icon { font-size: 0.95rem; }
+        .ios-cc-tab-count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2px 7px;
+          border-radius: 20px;
+          background: rgba(0, 0, 0, 0.2);
+          font-size: 0.74rem;
+          font-weight: 800;
+        }
+        .ios-cc-tab.active .ios-cc-tab-count {
+          background: rgba(255, 255, 255, 0.25);
+          color: #ffffff;
+        }
+
+        /* ── iOS Control Center Grid ── */
+        .ios-cc-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+        .ios-cc-tile {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 22px;
+          border-radius: 22px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-card);
+          box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+          backdrop-filter: blur(28px);
+          -webkit-backdrop-filter: blur(28px);
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
           opacity: 0;
-          transform: translateY(18px);
-          transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+          transform: translateY(20px);
+          transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease, opacity 0.6s ease;
+          user-select: none;
         }
-        .landing-module-card.in-view { opacity: 1; transform: translateY(0); }
-        .landing-module-card:hover {
-          border-color: var(--accent);
-          box-shadow: var(--shadow-card-hover);
+        .ios-cc-tile.in-view { opacity: 1; transform: translateY(0); }
+        .ios-cc-tile::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at top left, var(--tile-glow), transparent 70%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
         }
-        .landing-module-icon {
+        .ios-cc-tile:hover {
+          transform: translateY(-5px) scale(1.02);
+          border-color: var(--tile-accent);
+          box-shadow: 0 22px 48px -12px var(--tile-glow), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+        }
+        .ios-cc-tile:hover::before { opacity: 0.16; }
+        .ios-cc-tile:active {
+          transform: scale(0.97);
+        }
+        .ios-cc-tile.selected {
+          border-color: var(--tile-accent);
+          box-shadow: 0 18px 45px -10px var(--tile-glow), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), transparent), var(--bg-card);
+        }
+        .ios-cc-tile.selected::before { opacity: 0.2; }
+
+        .ios-cc-tile-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 16px;
+        }
+        .ios-cc-icon-box {
+          width: 48px;
+          height: 48px;
+          border-radius: 15px;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 38px;
-          height: 38px;
-          flex-shrink: 0;
-          border-radius: 10px;
+          color: #ffffff;
+          position: relative;
+          box-shadow: 0 8px 22px var(--tile-glow);
+          transition: transform 0.25s ease;
+        }
+        .ios-cc-tile:hover .ios-cc-icon-box {
+          transform: scale(1.08) rotate(-2deg);
+        }
+        .ios-cc-icon { stroke-width: 2.2px; }
+
+        .ios-cc-pill-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 12px;
+          border-radius: 100px;
+          background: rgba(148, 163, 184, 0.12);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          font-size: 0.74rem;
+          font-weight: 700;
+          color: var(--text-secondary);
+        }
+        .ios-cc-status-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+        }
+
+        .ios-cc-tile-body {
+          margin-bottom: 18px;
+          text-align: left;
+        }
+        .ios-cc-tile-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 6px;
+        }
+        .ios-cc-tile-title {
+          font-size: 1.05rem;
+          font-weight: 800;
+          letter-spacing: -0.3px;
+          color: var(--text-primary);
+        }
+        .ios-cc-tile-badge {
+          font-size: 0.68rem;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 6px;
           background: var(--accent-subtle);
           color: var(--accent);
+          white-space: nowrap;
         }
-        .landing-module-label { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
-        .landing-module-desc { font-size: 0.82rem; color: var(--text-muted); }
+        .ios-cc-tile-desc {
+          font-size: 0.84rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin: 0;
+        }
+
+        .ios-cc-tile-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 12px;
+          border-top: 1px solid var(--border);
+        }
+        .ios-cc-category-chip {
+          font-size: 0.74rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.6px;
+          color: var(--text-muted);
+        }
+        .ios-cc-toggle-indicator {
+          width: 32px;
+          height: 18px;
+          border-radius: 12px;
+          background: rgba(148, 163, 184, 0.22);
+          position: relative;
+          padding: 2px;
+          transition: background 0.25s ease;
+        }
+        .ios-cc-switch-knob {
+          display: block;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ios-cc-tile:hover .ios-cc-toggle-indicator,
+        .ios-cc-tile.selected .ios-cc-toggle-indicator {
+          background: var(--tile-accent);
+        }
+        .ios-cc-tile:hover .ios-cc-switch-knob,
+        .ios-cc-tile.selected .ios-cc-switch-knob {
+          transform: translateX(14px);
+        }
+
+        /* ── iOS Control Center Spotlight Bar ── */
+        .ios-cc-spotlight-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          padding: 22px 28px;
+          border-radius: 22px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 60%), var(--bg-card);
+          border: 1px solid var(--border-card);
+          box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(32px);
+          -webkit-backdrop-filter: blur(32px);
+          margin-top: 12px;
+          text-align: left;
+        }
+        .ios-cc-spotlight-left {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+        .ios-cc-spotlight-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+        }
+        .ios-cc-spotlight-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+        .ios-cc-spotlight-tag {
+          font-size: 0.74rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          color: var(--accent);
+        }
+        .ios-cc-spotlight-subdot { color: var(--text-muted); }
+        .ios-cc-spotlight-active {
+          font-size: 0.74rem;
+          font-weight: 700;
+          color: var(--success);
+        }
+        .ios-cc-spotlight-title {
+          font-size: 1.15rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          margin-bottom: 4px;
+        }
+        .ios-cc-spotlight-desc {
+          font-size: 0.88rem;
+          color: var(--text-secondary);
+          margin: 0;
+        }
+        .ios-cc-spotlight-right {
+          flex-shrink: 0;
+        }
+        .ios-cc-spotlight-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 13px 26px;
+          border-radius: 100px;
+          border: none;
+          background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+          color: #ffffff;
+          font-size: 0.92rem;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow: 0 6px 22px var(--accent-glow);
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .ios-cc-spotlight-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        @media (max-width: 768px) {
+          .ios-cc-spotlight-bar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+          }
+          .ios-cc-spotlight-right {
+            width: 100%;
+          }
+          .ios-cc-spotlight-btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
 
         /* ── Features ── */
         .landing-feature-grid {

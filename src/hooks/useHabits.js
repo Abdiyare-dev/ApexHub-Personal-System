@@ -3,37 +3,70 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCurrentStreak, getBestStreak, formatDate } from '@/lib/streaks';
 
+let cachedHabits = null;
+let inFlightFetch = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 15000; // 15 seconds fast memory cache
+
 export function useHabits() {
-  const [habits, setHabits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [habits, setHabits] = useState(cachedHabits || []);
+  const [loading, setLoading] = useState(!cachedHabits);
   const [error, setError] = useState(null);
 
-  const fetchHabits = useCallback(async () => {
+  const fetchHabits = useCallback(async (force = false) => {
+    const now = Date.now();
+    if (!force && cachedHabits && now - cacheTimestamp < CACHE_TTL_MS) {
+      setHabits(cachedHabits);
+      setLoading(false);
+      return cachedHabits;
+    }
+
+    if (inFlightFetch) {
+      try {
+        const data = await inFlightFetch;
+        setHabits(data);
+        return data;
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/habits');
-      if (!res.ok) {
-        throw new Error('Failed to fetch habits');
-      }
-      const data = await res.json();
-      
-      // Calculate streaks for each habit
-      const habitsWithStreaks = (data || []).map((habit) => {
-        const logs = habit.habit_logs || [];
-        const currentStreak = getCurrentStreak(logs, habit.frequency, habit.target_days);
-        const bestStreak = getBestStreak(logs, habit.frequency, habit.target_days);
-        return {
-          ...habit,
-          currentStreak,
-          bestStreak,
-        };
-      });
+      inFlightFetch = (async () => {
+        const res = await fetch('/api/habits');
+        if (!res.ok) {
+          throw new Error('Failed to fetch habits');
+        }
+        const data = await res.json();
+        
+        // Calculate streaks for each habit
+        const habitsWithStreaks = (data || []).map((habit) => {
+          const logs = habit.habit_logs || [];
+          const currentStreak = getCurrentStreak(logs, habit.frequency, habit.target_days);
+          const bestStreak = getBestStreak(logs, habit.frequency, habit.target_days);
+          return {
+            ...habit,
+            currentStreak,
+            bestStreak,
+          };
+        });
 
-      setHabits(habitsWithStreaks);
+        cachedHabits = habitsWithStreaks;
+        cacheTimestamp = Date.now();
+        return habitsWithStreaks;
+      })();
+
+      const result = await inFlightFetch;
+      setHabits(result);
+      return result;
     } catch (err) {
       setError(err.message);
     } finally {
+      inFlightFetch = null;
       setLoading(false);
     }
   }, []);

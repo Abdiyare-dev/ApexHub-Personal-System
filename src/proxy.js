@@ -36,6 +36,14 @@ export async function proxy(request) {
     }
   );
 
+  const { pathname } = request.nextUrl;
+
+  // Pass through /api routes immediately without redundant proxy auth network roundtrip;
+  // Route handlers perform their own direct authentication and return proper 401 JSON.
+  if (pathname.startsWith('/api/')) {
+    return supabaseResponse;
+  }
+
   // IMPORTANT: Do NOT use supabase.auth.getSession() here.
   // Use getUser() instead — it sends a request to the Supabase Auth server
   // every time to revalidate the Auth token.
@@ -53,13 +61,10 @@ export async function proxy(request) {
     '/forgot-password',
     '/update-password',
     '/auth',
-    '/api/auth',
     // Offline fallback: public/sw.js precaches this at install time with a
     // plain uncredentialed fetch, so it must not redirect to /login.
     '/offline',
   ];
-
-  const { pathname } = request.nextUrl;
 
   // Check if the current path is public
   const isPublicPath = publicPaths.some(

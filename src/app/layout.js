@@ -8,10 +8,16 @@ import { ToastProvider } from "@/components/ui/Toast";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+});
 const dancingScript = Dancing_Script({ 
   subsets: ["latin"],
   variable: '--font-dancing-script',
+  display: 'swap',
+  fallback: ['cursive', 'sans-serif'],
 });
 
 export const metadata = {

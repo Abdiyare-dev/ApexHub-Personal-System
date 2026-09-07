@@ -32,41 +32,24 @@ export function FinanceProvider({ children }) {
     try {
       setLoading(true);
 
-      // Seed default categories if none exist
-      const loadedCategories = await seedDefaultCategories(userId);
-      setCategories(loadedCategories);
+      const now = new Date();
+      const currentMonthFirstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
-      // 1. Fetch transactions
-      const { data: txData, error: txError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: false });
+      // Fetch categories, transactions, budgets, and savings goals concurrently
+      const [loadedCategories, { data: txData, error: txError }, { data: budgetData }, { data: savingsData }] = await Promise.all([
+        seedDefaultCategories(userId),
+        supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
+        supabase.from('budgets').select('*').eq('user_id', userId).eq('month', currentMonthFirstDay),
+        supabase.from('savings_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      ]);
 
+      if (loadedCategories) setCategories(loadedCategories);
       if (txError) {
         console.warn('[finance] could not load transactions:', formatError(txError));
       } else if (txData) {
         setTransactions(txData);
       }
-
-      // 2. Fetch budgets for current month
-      const now = new Date();
-      const currentMonthFirstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      const { data: budgetData } = await supabase
-        .from('budgets')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('month', currentMonthFirstDay);
-
       if (budgetData) setBudgets(budgetData);
-
-      // 3. Fetch savings goals
-      const { data: savingsData } = await supabase
-        .from('savings_goals')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
       if (savingsData) setSavingsGoals(savingsData);
     } catch (err) {
       console.error('[finance] failed to load finance data:', formatError(err));

@@ -28,44 +28,25 @@ export async function GET(request) {
 
     const { firstDay, lastDay } = getMonthDateRange(monthParam);
 
-    // 1. Fetch categories
-    const { data: categories, error: catError } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('user_id', user.id);
+    // Fetch categories, budgets, and expenses in parallel
+    const [
+      { data: categories, error: catError },
+      { data: budgets, error: budgetError },
+      { data: expenses, error: expError }
+    ] = await Promise.all([
+      supabase.from('categories').select('*').eq('user_id', user.id),
+      supabase.from('budgets').select('*').eq('user_id', user.id).eq('month', firstDay),
+      supabase.from('transactions').select('*').eq('user_id', user.id).eq('type', 'expense').gte('date', firstDay).lte('date', lastDay)
+    ]);
 
-    if (catError) {
-      return NextResponse.json({ error: catError.message }, { status: 500 });
-    }
+    if (catError) return NextResponse.json({ error: catError.message }, { status: 500 });
+    if (budgetError) return NextResponse.json({ error: budgetError.message }, { status: 500 });
+    if (expError) return NextResponse.json({ error: expError.message }, { status: 500 });
 
     const categoryMap = {};
     (categories || []).forEach((c) => {
       categoryMap[c.id] = c;
     });
-
-    // 2. Fetch budgets for this month
-    const { data: budgets, error: budgetError } = await supabase
-      .from('budgets')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('month', firstDay);
-
-    if (budgetError) {
-      return NextResponse.json({ error: budgetError.message }, { status: 500 });
-    }
-
-    // 3. Fetch expenses for this month
-    const { data: expenses, error: expError } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('type', 'expense')
-      .gte('date', firstDay)
-      .lte('date', lastDay);
-
-    if (expError) {
-      return NextResponse.json({ error: expError.message }, { status: 500 });
-    }
 
     // Aggregate spending by category_id
     const spentByCategory = {};

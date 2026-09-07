@@ -37,32 +37,28 @@ export async function GET(request) {
 
     const { firstDay, lastDay, year, month } = getMonthDateRange(monthParam);
 
-    // 1. Fetch categories for user
-    const { data: categories, error: catError } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('user_id', user.id);
+    const sixMonthsAgoObj = new Date(year, month - 1 - 5, 1);
+    const sixMonthsAgoStr = `${sixMonthsAgoObj.getFullYear()}-${String(sixMonthsAgoObj.getMonth() + 1).padStart(2, '0')}-01`;
 
-    if (catError) {
-      return NextResponse.json({ error: catError.message }, { status: 500 });
-    }
+    // Fetch categories, month transactions, and trend transactions in parallel
+    const [
+      { data: categories, error: catError },
+      { data: monthTransactions, error: txError },
+      { data: trendTransactions, error: trendError }
+    ] = await Promise.all([
+      supabase.from('categories').select('*').eq('user_id', user.id),
+      supabase.from('transactions').select('*').eq('user_id', user.id).gte('date', firstDay).lte('date', lastDay),
+      supabase.from('transactions').select('amount, type, date').eq('user_id', user.id).gte('date', sixMonthsAgoStr).lte('date', lastDay)
+    ]);
+
+    if (catError) return NextResponse.json({ error: catError.message }, { status: 500 });
+    if (txError) return NextResponse.json({ error: txError.message }, { status: 500 });
+    if (trendError) return NextResponse.json({ error: trendError.message }, { status: 500 });
 
     const categoryMap = {};
     (categories || []).forEach((c) => {
       categoryMap[c.id] = c;
     });
-
-    // 2. Fetch current month transactions
-    const { data: monthTransactions, error: txError } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', user.id)
-      .gte('date', firstDay)
-      .lte('date', lastDay);
-
-    if (txError) {
-      return NextResponse.json({ error: txError.message }, { status: 500 });
-    }
 
     let totalIncome = 0;
     let totalExpense = 0;
@@ -94,21 +90,6 @@ export async function GET(request) {
         };
       })
       .sort((a, b) => b.total - a.total);
-
-    // 3. Fetch last 6 months trend
-    const sixMonthsAgoObj = new Date(year, month - 1 - 5, 1);
-    const sixMonthsAgoStr = `${sixMonthsAgoObj.getFullYear()}-${String(sixMonthsAgoObj.getMonth() + 1).padStart(2, '0')}-01`;
-
-    const { data: trendTransactions, error: trendError } = await supabase
-      .from('transactions')
-      .select('amount, type, date')
-      .eq('user_id', user.id)
-      .gte('date', sixMonthsAgoStr)
-      .lte('date', lastDay);
-
-    if (trendError) {
-      return NextResponse.json({ error: trendError.message }, { status: 500 });
-    }
 
     const monthKeys = getLast6MonthsKeys(year, month);
     const trendMap = {};

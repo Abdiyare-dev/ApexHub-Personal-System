@@ -1738,8 +1738,9 @@ input[type="time"] {
 }
 .landing-brand-name {
   font-weight: 900;
-  font-size: 1.18rem;
-  letter-spacing: -0.5px;
+  font-size: 1.16rem;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
   background: linear-gradient(135deg, #0A84FF 0%, #0055D4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1751,42 +1752,12 @@ input[type="time"] {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.landing-brand-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 7px;
-  border-radius: 100px;
-  background: rgba(10, 132, 255, 0.12);
-  border: 1px solid rgba(10, 132, 255, 0.28);
-  color: #0A84FF;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-}
-[data-theme="dark"] .landing-brand-pill,
-.dark .landing-brand-pill {
-  background: rgba(100, 210, 255, 0.14);
-  border-color: rgba(100, 210, 255, 0.3);
-  color: #64D2FF;
-}
-.brand-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #0A84FF;
-  box-shadow: 0 0 6px #0A84FF;
-}
-[data-theme="dark"] .brand-dot,
-.dark .brand-dot {
-  background: #64D2FF;
-  box-shadow: 0 0 6px #64D2FF;
-}
 .landing-brand-subline {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-muted);
   letter-spacing: 0.1px;
+  line-height: 1.2;
   margin-top: 1px;
 }
 

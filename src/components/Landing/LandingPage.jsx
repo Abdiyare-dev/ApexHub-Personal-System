@@ -459,13 +459,7 @@ export default function LandingPage() {
               <img src="/icon_logo.png" alt="ApexHub" width={28} height={28} className="landing-brand-icon" />
             </div>
             <div className="landing-brand-text-block">
-              <div className="landing-brand-title-row">
-                <span className="landing-brand-name">ApexHub</span>
-                <span className="landing-brand-pill">
-                  <span className="brand-dot" />
-                  <span>PERSONAL SYSTEM</span>
-                </span>
-              </div>
+              <span className="landing-brand-name">ApexHub</span>
               <span className="landing-brand-subline">Personal Development & Tracking System</span>
             </div>
           </a>
@@ -1041,8 +1035,9 @@ export default function LandingPage() {
         }
         .landing-brand-name {
           font-weight: 900;
-          font-size: 1.15rem;
-          letter-spacing: -0.5px;
+          font-size: 1.16rem;
+          letter-spacing: -0.4px;
+          line-height: 1.15;
           background: linear-gradient(135deg, #0A84FF 0%, #0055D4 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -1053,40 +1048,12 @@ export default function LandingPage() {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-        .landing-brand-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 2px 7px;
-          border-radius: 100px;
-          background: rgba(10, 132, 255, 0.1);
-          border: 1px solid rgba(10, 132, 255, 0.25);
-          color: #0A84FF;
-          font-size: 0.62rem;
-          font-weight: 800;
-          letter-spacing: 0.6px;
-        }
-        :global(.dark) .landing-brand-pill {
-          background: rgba(100, 210, 255, 0.12);
-          border-color: rgba(100, 210, 255, 0.28);
-          color: #64D2FF;
-        }
-        .brand-dot {
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: #0A84FF;
-          box-shadow: 0 0 6px #0A84FF;
-        }
-        :global(.dark) .brand-dot {
-          background: #64D2FF;
-          box-shadow: 0 0 6px #64D2FF;
-        }
         .landing-brand-subline {
-          font-size: 0.68rem;
+          font-size: 0.7rem;
           font-weight: 600;
           color: var(--text-muted);
           letter-spacing: 0.1px;
+          line-height: 1.2;
           margin-top: 1px;
         }
 

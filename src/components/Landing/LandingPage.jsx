@@ -173,189 +173,6 @@ const CORE_PILLARS = [
   }
 ];
 
-const MODULE_CATEGORIES = [
-  { id: 'all', label: 'All Engines', icon: '✦', count: 12 },
-  { id: 'productivity', label: 'Productivity Suite', icon: '⚡', count: 5 },
-  { id: 'finance', label: 'Finance & Wealth', icon: '💎', count: 4 },
-  { id: 'system', label: 'System & Mobile', icon: '🚀', count: 3 },
-];
-
-const MODULES = [
-  // Finance
-  {
-    id: 'cash-flow',
-    icon: Receipt,
-    label: 'Cash In & Expenses',
-    desc: 'Instant income & expense entry with automatic smart categorizations',
-    category: 'finance',
-    categoryName: 'Finance',
-    gradient: 'linear-gradient(135deg, #0A84FF 0%, #0055D4 100%)',
-    glow: 'rgba(10, 132, 255, 0.45)',
-    accent: '#0A84FF',
-    badge: 'Live Reconcile',
-    status: 'Real-time',
-    highlight: 'Instant categorized transactions with recurring inflow & outflow tracking.',
-  },
-  {
-    id: 'budgets',
-    icon: Wallet,
-    label: 'Smart Budgets',
-    desc: 'Category spending caps with executive health status indicators',
-    category: 'finance',
-    categoryName: 'Finance',
-    gradient: 'linear-gradient(135deg, #30D158 0%, #1B8A38 100%)',
-    glow: 'rgba(48, 209, 88, 0.45)',
-    accent: '#30D158',
-    badge: 'Pacing Alerts',
-    status: 'Tracking',
-    highlight: 'Period pacing thresholds and health pills preventing budget overruns.',
-  },
-  {
-    id: 'savings',
-    icon: PiggyBank,
-    label: 'Savings Vault',
-    desc: 'Milestone-based deposits with visual progress fill rings',
-    category: 'finance',
-    categoryName: 'Finance',
-    gradient: 'linear-gradient(135deg, #FF9F0A 0%, #D97706 100%)',
-    glow: 'rgba(255, 159, 10, 0.45)',
-    accent: '#FF9F0A',
-    badge: 'Goal Vault',
-    status: 'Milestones',
-    highlight: 'Automated compound deposit history and milestone target projections.',
-  },
-  {
-    id: 'reports',
-    icon: FileText,
-    label: 'Executive Reports',
-    desc: 'One-click multi-page PDF & styled Excel analytics exports',
-    category: 'finance',
-    categoryName: 'Finance',
-    gradient: 'linear-gradient(135deg, #64D2FF 0%, #0091FF 100%)',
-    glow: 'rgba(100, 210, 255, 0.45)',
-    accent: '#64D2FF',
-    badge: 'PDF & XLSX',
-    status: 'Export Ready',
-    highlight: 'Multi-sheet styled workbooks and periodic comparison chart summaries.',
-  },
-
-  // Productivity
-  {
-    id: 'tasks',
-    icon: ListChecks,
-    label: 'Execution Tasks',
-    desc: 'Prioritized daily workflow with one-click timetable conversion',
-    category: 'productivity',
-    categoryName: 'Productivity',
-    gradient: 'linear-gradient(135deg, #5E5CE6 0%, #3B38B8 100%)',
-    glow: 'rgba(94, 92, 230, 0.45)',
-    accent: '#5E5CE6',
-    badge: 'Kanban + Matrix',
-    status: 'High Velocity',
-    highlight: 'Directly convert timetable blocks into prioritized actionable tasks.',
-  },
-  {
-    id: 'habits',
-    icon: Repeat,
-    label: 'Habit Engine',
-    desc: 'Streak tracking with automated consistency heatmaps and logs',
-    category: 'productivity',
-    categoryName: 'Productivity',
-    gradient: 'linear-gradient(135deg, #FF375F 0%, #C41C40 100%)',
-    glow: 'rgba(255, 55, 95, 0.45)',
-    accent: '#FF375F',
-    badge: 'Streaks Heatmap',
-    status: 'Daily Sync',
-    highlight: 'Optimistic streak check-in with rolling 30-day interactive history grid.',
-  },
-  {
-    id: 'goals',
-    icon: Target,
-    label: 'Goals & Milestones',
-    desc: 'Multi-stage visual journey roadmaps with checkpoint pins',
-    category: 'productivity',
-    categoryName: 'Productivity',
-    gradient: 'linear-gradient(135deg, #BF5AF2 0%, #8928BA 100%)',
-    glow: 'rgba(191, 90, 242, 0.45)',
-    accent: '#BF5AF2',
-    badge: 'Visual Roadmaps',
-    status: 'Long-range',
-    highlight: 'Animated vector progression with active beacon checkpoints.',
-  },
-  {
-    id: 'timetable',
-    icon: Calendar,
-    label: 'Dynamic Timetable',
-    desc: 'Weekly schedule template with automated task conversion',
-    category: 'productivity',
-    categoryName: 'Productivity',
-    gradient: 'linear-gradient(135deg, #00C7BE 0%, #00827C 100%)',
-    glow: 'rgba(0, 199, 190, 0.45)',
-    accent: '#00C7BE',
-    badge: 'Auto Convert',
-    status: '7-Day View',
-    highlight: 'Color-coded weekly timeboxing matrices with instant task pushers.',
-  },
-  {
-    id: 'projects',
-    icon: Layers,
-    label: 'Project Portfolios',
-    desc: 'Detailed roadmaps, task breakdowns, and performance analytics',
-    category: 'productivity',
-    categoryName: 'Productivity',
-    gradient: 'linear-gradient(135deg, #FF6482 0%, #E0244D 100%)',
-    glow: 'rgba(255, 100, 130, 0.45)',
-    accent: '#FF6482',
-    badge: 'Full Stages',
-    status: 'Active Track',
-    highlight: 'Terminal delivery tracking ensuring all project goals are fulfilled.',
-  },
-
-  // System & Mobile
-  {
-    id: 'analytics',
-    icon: TrendingUp,
-    label: 'Unified Intelligence',
-    desc: 'Convergence dashboard merging financial health & task velocity',
-    category: 'system',
-    categoryName: 'Intelligence',
-    gradient: 'linear-gradient(135deg, #FF453A 0%, #B8281E 100%)',
-    glow: 'rgba(255, 69, 58, 0.45)',
-    accent: '#FF453A',
-    badge: 'Cross-Domain KPI',
-    status: 'Real-time',
-    highlight: 'Holistic executive charts merging finance health and productivity output.',
-  },
-  {
-    id: 'pwa',
-    icon: Smartphone,
-    label: 'Native Mobile PWA',
-    desc: 'Installable app with offline support and standalone iOS/Android UI',
-    category: 'system',
-    categoryName: 'Platform',
-    gradient: 'linear-gradient(135deg, #32ADE6 0%, #0077A6 100%)',
-    glow: 'rgba(50, 173, 230, 0.45)',
-    accent: '#32ADE6',
-    badge: 'iOS & Android',
-    status: 'Offline Ready',
-    highlight: 'Zero app-store friction, instantaneous home-screen launch with service workers.',
-  },
-  {
-    id: 'privacy',
-    icon: ShieldCheck,
-    label: 'Private Cloud Vault',
-    desc: 'Encrypted personal data scoped strictly to your authenticated login',
-    category: 'system',
-    categoryName: 'Security',
-    gradient: 'linear-gradient(135deg, #30D158 0%, #009944 100%)',
-    glow: 'rgba(48, 209, 88, 0.45)',
-    accent: '#30D158',
-    badge: '100% Private',
-    status: 'Encrypted',
-    highlight: 'Supabase Row Level Security scoping data exclusively to your account.',
-  },
-];
-
 const STEPS = [
   { n: '01', title: 'Create your workspace', desc: 'Sign up with email or Google. Your account is yours alone — no shared workspace, no team seats.' },
   { n: '02', title: 'Track what matters', desc: 'Log income and expenses, set budgets and savings goals, add tasks, habits, and your weekly timetable.' },
@@ -430,14 +247,6 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [selectedModule, setSelectedModule] = useState(MODULES[0]);
-
-  const filteredModules = useMemo(() => {
-    if (activeCategory === 'all') return MODULES;
-    return MODULES.filter(m => m.category === activeCategory);
-  }, [activeCategory]);
-
   const goLogin = () => router.push('/login');
 
   const scrollToTop = (e) => {
@@ -466,7 +275,7 @@ export default function LandingPage() {
 
           <div className="landing-nav-center-links">
             <a href="#pillars" className="liquid-nav-link">Pillars</a>
-            <a href="#modules" className="liquid-nav-link">Control Center</a>
+            <a href="#platform" className="liquid-nav-link">Platform & Security</a>
             <a href="#features" className="liquid-nav-link">Features</a>
             <a href="#how" className="liquid-nav-link">How It Works</a>
             <a href="#faq" className="liquid-nav-link">FAQ</a>
@@ -699,109 +508,139 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── IPHONE CONTROL CENTER MODULE EXPLORER ──────────────────── */}
-      <section ref={modRef} id="modules" className="landing-section">
+      {/* ── DYNAMIC SECURITY & PLATFORM ENGINE ──────────────────────── */}
+      <section ref={modRef} id="platform" className="landing-section">
         <div className={`landing-section-head ${modInView ? 'in-view' : ''}`}>
-          <div className="landing-cc-badge">
-            <span className="cc-badge-dot" />
-            <span>CONTROL CENTER SYSTEM</span>
+          <div className="landing-cc-badge security">
+            <ShieldCheck size={14} className="security-badge-icon" />
+            <span>ENTERPRISE SECURITY & PLATFORM</span>
           </div>
-          <h2 className="landing-h2">Explore Specialized Engines.</h2>
+          <h2 className="landing-h2">Built as Your Private Vault. Zero Compromises.</h2>
           <p className="landing-sub center">
-            Interact with the twelve integrated tools configured into the iPhone Control Center glass command deck.
+            ApexHub is engineered with bank-grade isolation and client-side encryption. Your data is strictly yours — no trackers, no external training models, and no shared database tenants.
           </p>
-
-          {/* iOS Control Center Category Switcher */}
-          <div className="ios-cc-switcher">
-            {MODULE_CATEGORIES.map(cat => (
-              <button
-                key={cat.id}
-                type="button"
-                className={`ios-cc-tab ${activeCategory === cat.id ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat.id)}
-              >
-                <span className="ios-cc-tab-icon">{cat.icon}</span>
-                <span className="ios-cc-tab-label">{cat.label}</span>
-                <span className="ios-cc-tab-count">{cat.count}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* iOS Control Center Grid */}
-        <div className="ios-cc-grid">
-          {filteredModules.map((m, i) => {
-            const Icon = m.icon;
-            const isSelected = selectedModule?.id === m.id;
-            return (
-              <div
-                key={m.id}
-                className={`ios-cc-tile ${modInView ? 'in-view' : ''} ${isSelected ? 'selected' : ''}`}
-                style={{ 
-                  '--tile-accent': m.accent,
-                  '--tile-glow': m.glow,
-                  '--tile-gradient': m.gradient,
-                  transitionDelay: `${(i % 6) * 0.05}s` 
-                }}
-                onClick={() => setSelectedModule(m)}
-                onMouseEnter={() => setSelectedModule(m)}
-              >
-                <div className="ios-cc-tile-top">
-                  <div className="ios-cc-icon-box" style={{ background: m.gradient }}>
-                    <Icon size={22} className="ios-cc-icon" />
-                  </div>
-                  <div className="ios-cc-pill-badge">
-                    <span className="ios-cc-status-dot" style={{ background: m.accent, boxShadow: `0 0 8px ${m.accent}` }} />
-                    <span>{m.status}</span>
-                  </div>
-                </div>
-
-                <div className="ios-cc-tile-body">
-                  <div className="ios-cc-tile-title-row">
-                    <h3 className="ios-cc-tile-title">{m.label}</h3>
-                    <span className="ios-cc-tile-badge">{m.badge}</span>
-                  </div>
-                  <p className="ios-cc-tile-desc">{m.desc}</p>
-                </div>
-
-                <div className="ios-cc-tile-footer">
-                  <span className="ios-cc-category-chip">{m.categoryName}</span>
-                  <div className="ios-cc-toggle-indicator">
-                    <span className="ios-cc-switch-knob" />
-                  </div>
-                </div>
+        {/* Dynamic Interactive Security & Platform Sandbox */}
+        <div className={`landing-security-deck ${modInView ? 'in-view' : ''}`}>
+          <div className="security-cards-grid">
+            {/* Security Feature 1: Row-Level Vault */}
+            <div className="security-feature-card">
+              <div className="sfc-icon-box blue">
+                <ShieldCheck size={24} color="#0A84FF" />
               </div>
-            );
-          })}
-        </div>
-
-        {/* iOS Control Center Spotlight Bar */}
-        {selectedModule && (
-          <div className="ios-cc-spotlight-bar fade-in">
-            <div className="ios-cc-spotlight-left">
-              <div className="ios-cc-spotlight-icon" style={{ background: selectedModule.gradient }}>
-                {(() => {
-                  const SelIcon = selectedModule.icon;
-                  return <SelIcon size={24} color="#ffffff" />;
-                })()}
-              </div>
-              <div>
-                <div className="ios-cc-spotlight-header">
-                  <span className="ios-cc-spotlight-tag">{selectedModule.categoryName} Engine</span>
-                  <span className="ios-cc-spotlight-subdot">•</span>
-                  <span className="ios-cc-spotlight-active">Active in Workspace</span>
+              <div className="sfc-content">
+                <div className="sfc-title-row">
+                  <h3 className="sfc-title">Row-Level Security Vault</h3>
+                  <span className="sfc-status-pill green">100% Isolated</span>
                 </div>
-                <h4 className="ios-cc-spotlight-title">{selectedModule.label}</h4>
-                <p className="ios-cc-spotlight-desc">{selectedModule.highlight}</p>
+                <p className="sfc-desc">
+                  Every single transaction, habit log, and goal milestone is guarded by Supabase Row Level Security (RLS) policies scoped strictly to your authenticated session token.
+                </p>
+                <div className="sfc-meta-row">
+                  <span className="sfc-meta-item"><Check size={13} /> AES-256 Cloud Encryption</span>
+                  <span className="sfc-meta-item"><Check size={13} /> Zero Multi-Tenant Leakage</span>
+                </div>
               </div>
             </div>
-            <div className="ios-cc-spotlight-right">
-              <button onClick={goLogin} className="ios-cc-spotlight-btn">
-                Launch in Workspace <ArrowRight size={16} />
-              </button>
+
+            {/* Security Feature 2: Zero Bank Linking Friction */}
+            <div className="security-feature-card">
+              <div className="sfc-icon-box amber">
+                <Wallet size={24} color="#FF9F0A" />
+              </div>
+              <div className="sfc-content">
+                <div className="sfc-title-row">
+                  <h3 className="sfc-title">Zero Banking Credentials Required</h3>
+                  <span className="sfc-status-pill blue">Zero Risk</span>
+                </div>
+                <p className="sfc-desc">
+                  ApexHub never asks for your bank logins or credentials. Log financial transactions manually or via one-click recurring entries for complete peace of mind.
+                </p>
+                <div className="sfc-meta-row">
+                  <span className="sfc-meta-item"><Check size={13} /> No Third-Party Data Brokers</span>
+                  <span className="sfc-meta-item"><Check size={13} /> 100% Self-Governed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Feature 3: Offline PWA & Service Workers */}
+            <div className="security-feature-card">
+              <div className="sfc-icon-box purple">
+                <Smartphone size={24} color="#BF5AF2" />
+              </div>
+              <div className="sfc-content">
+                <div className="sfc-title-row">
+                  <h3 className="sfc-title">Native Mobile PWA Engine</h3>
+                  <span className="sfc-status-pill purple">Offline Ready</span>
+                </div>
+                <p className="sfc-desc">
+                  Progressive Web App with automated Service Worker caching. Add directly to your iOS or Android home screen for instant native-speed performance even in airplane mode.
+                </p>
+                <div className="sfc-meta-row">
+                  <span className="sfc-meta-item"><Check size={13} /> Instant Home-Screen Launch</span>
+                  <span className="sfc-meta-item"><Check size={13} /> Background Sync</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Feature 4: Full Data Portability */}
+            <div className="security-feature-card">
+              <div className="sfc-icon-box green">
+                <FileText size={24} color="#30D158" />
+              </div>
+              <div className="sfc-content">
+                <div className="sfc-title-row">
+                  <h3 className="sfc-title">Zero Vendor Lock-In</h3>
+                  <span className="sfc-status-pill green">Export Any Time</span>
+                </div>
+                <p className="sfc-desc">
+                  Your life's records stay portable. Generate one-click styled Excel analytics sheets and multi-page executive PDF reports whenever you need them.
+                </p>
+                <div className="sfc-meta-row">
+                  <span className="sfc-meta-item"><Check size={13} /> Styled Multi-Sheet Excel</span>
+                  <span className="sfc-meta-item"><Check size={13} /> Clean PDF Print Ready</span>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Live Interactive Security Console Widget */}
+          <div className="security-console-box">
+            <div className="console-header">
+              <div className="console-header-left">
+                <div className="console-dot-live" />
+                <span className="console-title">APEXHUB SECURITY & SYNC STATUS</span>
+              </div>
+              <div className="console-header-right">
+                <span className="console-cipher">SESSION ENCRYPTED</span>
+              </div>
+            </div>
+
+            <div className="console-body-grid">
+              <div className="console-metric-tile">
+                <span className="cmt-label">Data Privacy Level</span>
+                <span className="cmt-val text-green">100% Confidential</span>
+                <span className="cmt-sub">Zero model training & zero data sales</span>
+              </div>
+              <div className="console-metric-tile">
+                <span className="cmt-label">Session Scoping</span>
+                <span className="cmt-val text-blue">Strict RLS Active</span>
+                <span className="cmt-sub">Identity-based database access</span>
+              </div>
+              <div className="console-metric-tile">
+                <span className="cmt-label">PWA Offline Caching</span>
+                <span className="cmt-val text-purple">Optimistic Local Sync</span>
+                <span className="cmt-sub">Service worker cached assets</span>
+              </div>
+              <div className="console-metric-tile">
+                <span className="cmt-label">Platform Portability</span>
+                <span className="cmt-val text-amber">Instant PDF / Excel</span>
+                <span className="cmt-sub">Complete data export autonomy</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── FEATURES ─────────────────────────────────────────────────── */}
@@ -906,7 +745,8 @@ export default function LandingPage() {
           <span className="landing-footer-name">ApexHub</span>
         </a>
         <div className="landing-footer-links">
-          <a href="#modules" className="landing-footer-link">Modules</a>
+          <a href="#pillars" className="landing-footer-link">Pillars</a>
+          <a href="#platform" className="landing-footer-link">Platform & Security</a>
           <a href="#privacy" className="landing-footer-link">Privacy</a>
           <a href="#faq" className="landing-footer-link">FAQ</a>
           <button onClick={goLogin} className="landing-footer-link as-button">Sign in</button>

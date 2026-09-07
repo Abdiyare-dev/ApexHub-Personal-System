@@ -17,6 +17,7 @@ export default function Projects() {
   const [mainView, setMainView] = useState('list'); // 'list' | 'roadmap'
   const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [termFilter, setTermFilter] = useState('all'); // 'all' | 'short-term' | 'long-term'
+  const [portfolioRoadmapFilter, setPortfolioRoadmapFilter] = useState('goals'); // 'goals' | 'all'
 
   // Dedicated Project Detail View State
   const [activeProjectId, setActiveProjectId] = useState(null);
@@ -217,50 +218,113 @@ export default function Projects() {
 
   // General Portfolio Roadmap Milestones
   const portfolioRoadmapMilestones = useMemo(() => {
-    if (selectedProjectId === 'all') {
-      return filteredProjects.map((p, idx) => {
-        const tasksCount = p.tasks?.length || 0;
-        const doneCount = (p.tasks || []).filter(t => t.completed).length;
-        const allDone = tasksCount > 0 && doneCount === tasksCount;
-        const state = (p.isCompleted || allDone) ? 'completed' : doneCount > 0 ? 'active' : 'locked';
-        return {
-          id: p.id,
-          text: `${p.name} (${doneCount}/${tasksCount} tasks)`,
-          completed: Boolean(p.isCompleted || allDone),
-          state,
-          step: idx + 1,
-          type: 'project'
-        };
+    // 1. If a specific project is selected:
+    if (selectedProjectId !== 'all') {
+      const curr = projects.find(p => p.id === selectedProjectId);
+      if (!curr) return [];
+      const allTasks = curr.tasks || [];
+      const filtered = portfolioRoadmapFilter === 'goals'
+        ? allTasks.filter(t => t.category === 'goal')
+        : allTasks;
+
+      const hasTasks = allTasks.length > 0;
+      const allProjectTasksCompleted = hasTasks && allTasks.every(t => t.completed);
+      const isProjectFullyDone = Boolean(curr.isCompleted || allProjectTasksCompleted);
+
+      const steps = filtered.map((t, idx) => ({
+        id: t.id,
+        text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
+        completed: Boolean(t.completed),
+        state: t.completed ? 'completed' : 'locked',
+        step: idx + 1,
+        type: t.category === 'goal' ? 'goal' : 'task'
+      }));
+
+      steps.push({
+        id: `${curr.id}-terminal-delivery`,
+        text: `🏆 Final Delivery: ${curr.name}`,
+        completed: isProjectFullyDone,
+        state: isProjectFullyDone ? 'completed' : 'locked',
+        step: steps.length + 1,
+        type: 'delivery'
       });
+
+      return steps;
     }
 
-    const curr = projects.find(p => p.id === selectedProjectId);
-    if (!curr) return [];
-    const tasks = curr.tasks || [];
-    const hasTasks = tasks.length > 0;
-    const allProjectTasksCompleted = hasTasks && tasks.every(t => t.completed);
-    const isProjectFullyDone = Boolean(curr.isCompleted || allProjectTasksCompleted);
+    // 2. If 'all' projects is selected:
+    // When only 1 project is present, show its full multi-stage journey directly:
+    if (filteredProjects.length === 1) {
+      const p = filteredProjects[0];
+      const allTasks = p.tasks || [];
+      const filtered = portfolioRoadmapFilter === 'goals'
+        ? allTasks.filter(t => t.category === 'goal')
+        : allTasks;
 
-    const steps = tasks.map((t, idx) => ({
-      id: t.id,
-      text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
-      completed: !!t.completed,
-      state: t.completed ? 'completed' : 'locked',
-      step: idx + 1,
-      type: t.category === 'goal' ? 'goal' : 'task'
-    }));
+      const hasTasks = allTasks.length > 0;
+      const allProjectTasksCompleted = hasTasks && allTasks.every(t => t.completed);
+      const isProjectFullyDone = Boolean(p.isCompleted || allProjectTasksCompleted);
 
-    steps.push({
-      id: `${curr.id}-terminal-delivery`,
-      text: `🏆 Final Delivery: ${curr.name}`,
-      completed: isProjectFullyDone,
-      state: isProjectFullyDone ? 'completed' : 'locked',
-      step: steps.length + 1,
-      type: 'delivery'
+      const steps = filtered.map((t, idx) => ({
+        id: t.id,
+        text: `${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
+        completed: Boolean(t.completed),
+        state: t.completed ? 'completed' : 'locked',
+        step: idx + 1,
+        type: t.category === 'goal' ? 'goal' : 'task'
+      }));
+
+      steps.push({
+        id: `${p.id}-terminal-delivery`,
+        text: `🏆 Final Delivery: ${p.name}`,
+        completed: isProjectFullyDone,
+        state: isProjectFullyDone ? 'completed' : 'locked',
+        step: steps.length + 1,
+        type: 'delivery'
+      });
+
+      return steps;
+    }
+
+    // When multiple projects exist, aggregate their goal milestones & delivery stages sequentially:
+    const aggregatedSteps = [];
+    let stepNumber = 1;
+
+    filteredProjects.forEach(p => {
+      const allTasks = p.tasks || [];
+      const filtered = portfolioRoadmapFilter === 'goals'
+        ? allTasks.filter(t => t.category === 'goal')
+        : allTasks;
+
+      const hasTasks = allTasks.length > 0;
+      const allProjectTasksCompleted = hasTasks && allTasks.every(t => t.completed);
+      const isProjectFullyDone = Boolean(p.isCompleted || allProjectTasksCompleted);
+
+      filtered.forEach(t => {
+        aggregatedSteps.push({
+          id: `${p.id}-${t.id}`,
+          text: `[${p.name}] ${t.category === 'goal' ? '🎯 ' : '⚡ '}${t.text}`,
+          completed: Boolean(t.completed),
+          state: t.completed ? 'completed' : 'locked',
+          step: stepNumber++,
+          type: t.category === 'goal' ? 'goal' : 'task',
+          projectId: p.id
+        });
+      });
+
+      aggregatedSteps.push({
+        id: `${p.id}-terminal-delivery`,
+        text: `🏆 Final Delivery: ${p.name}`,
+        completed: isProjectFullyDone,
+        state: isProjectFullyDone ? 'completed' : 'locked',
+        step: stepNumber++,
+        type: 'delivery',
+        projectId: p.id
+      });
     });
 
-    return steps;
-  }, [filteredProjects, projects, selectedProjectId]);
+    return aggregatedSteps;
+  }, [filteredProjects, projects, selectedProjectId, portfolioRoadmapFilter]);
 
   return (
     <div className="module-container fade-in">
@@ -660,25 +724,43 @@ export default function Projects() {
 
           {mainView === 'roadmap' ? (
             <div className="project-roadmap-view">
-              {/* Project Selector Filter */}
-              <div className="project-selector-bar">
-                <span className="selector-label">🗺️ View Roadmap For:</span>
-                <div className="project-filter-pills">
-                  <button 
-                    className={`filter-pill ${selectedProjectId === 'all' ? 'active' : ''}`}
-                    onClick={() => setSelectedProjectId('all')}
-                  >
-                    All Projects ({filteredProjects.length})
-                  </button>
-                  {filteredProjects.map(p => (
+              {/* Project Selector Filter & Step Type Filter */}
+              <div className="project-selector-bar" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span className="selector-label">🗺️ View Roadmap For:</span>
+                  <div className="project-filter-pills">
                     <button 
-                      key={`pill-${p.id}`}
-                      className={`filter-pill ${selectedProjectId === p.id ? 'active' : ''}`}
-                      onClick={() => setSelectedProjectId(p.id)}
+                      className={`filter-pill ${selectedProjectId === 'all' ? 'active' : ''}`}
+                      onClick={() => setSelectedProjectId('all')}
                     >
-                      {p.name}
+                      All Projects ({filteredProjects.length})
                     </button>
-                  ))}
+                    {filteredProjects.map(p => (
+                      <button 
+                        key={`pill-${p.id}`}
+                        className={`filter-pill ${selectedProjectId === p.id ? 'active' : ''}`}
+                        onClick={() => setSelectedProjectId(p.id)}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filter Switcher for Steps: Goal Milestones vs All Steps */}
+                <div className="segmented-control small">
+                  <button 
+                    className={`seg-btn ${portfolioRoadmapFilter === 'goals' ? 'active' : ''}`}
+                    onClick={() => setPortfolioRoadmapFilter('goals')}
+                  >
+                    🎯 Goal Milestones
+                  </button>
+                  <button 
+                    className={`seg-btn ${portfolioRoadmapFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setPortfolioRoadmapFilter('all')}
+                  >
+                    ⚡ All Steps
+                  </button>
                 </div>
               </div>
 

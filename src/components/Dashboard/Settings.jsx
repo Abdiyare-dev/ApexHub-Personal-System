@@ -4,10 +4,14 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { createClient } from '@/lib/supabase/client';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import {
   User, ShieldCheck, Sliders, Database, LogOut, Check,
   Eye, EyeOff, KeyRound, Download, RefreshCw, Moon, Sun,
-  Lock, Copy, CheckCircle2, AlertCircle, Sparkles, Terminal
+  Lock, Copy, CheckCircle2, AlertCircle, FileSpreadsheet,
+  FileText, Code2, Sparkles, Terminal
 } from 'lucide-react';
 
 export default function Settings() {
@@ -35,8 +39,10 @@ export default function Settings() {
   const [firstDayOfWeek, setFirstDayOfWeek] = useState('monday');
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY');
 
-  // Form states — Data Export
-  const [isExporting, setIsExporting] = useState(false);
+  // Form states — Data Export (Excel, PDF, JSON)
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingJson, setIsExportingJson] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
 
   // Snackbar
@@ -151,76 +157,424 @@ export default function Settings() {
     }
   };
 
-  // 4. REAL Database Data Export (Full JSON Backup)
-  const handleExportAllData = async () => {
-    setIsExporting(true);
+  // Helper: Fetch all authentic records from Supabase across all modules
+  const fetchFullDatabaseRecords = async () => {
+    const supabase = createClient();
+    const userId = user?.id;
+    if (!userId) throw new Error('No authenticated user session found');
+
+    const [
+      { data: transactions },
+      { data: budgets },
+      { data: savings },
+      { data: tasks },
+      { data: habits },
+      { data: timetable },
+      { data: goals },
+      { data: projects },
+      { data: journals }
+    ] = await Promise.all([
+      supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false }),
+      supabase.from('budgets').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('savings_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('tasks').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('timetable_blocks').select('*').eq('user_id', userId).order('start_time', { ascending: true }),
+      supabase.from('goals').select('*, milestones(*)').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('projects').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('daily_journals').select('*').eq('user_id', userId).order('date', { ascending: false })
+    ]);
+
+    return {
+      transactions: transactions || [],
+      budgets: budgets || [],
+      savings: savings || [],
+      tasks: tasks || [],
+      habits: habits || [],
+      timetable: timetable || [],
+      goals: goals || [],
+      projects: projects || [],
+      journals: journals || []
+    };
+  };
+
+  // ─── 4A. REAL FULL MULTI-SHEET EXCEL EXPORT (.xlsx) ──────────────────────────
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true);
     try {
-      const supabase = createClient();
-      const userId = user?.id;
+      const records = await fetchFullDatabaseRecords();
+      const todayStr = new Date().toISOString().split('T')[0];
 
-      if (!userId) throw new Error('No authenticated user session found');
+      const wb = XLSX.utils.book_new();
 
-      // Query real active tables in parallel
-      const [
-        { data: transactions },
-        { data: budgets },
-        { data: savings },
-        { data: tasks },
-        { data: habits },
-        { data: timetable },
-        { data: goals },
-        { data: projects },
-        { data: journals }
-      ] = await Promise.all([
-        supabase.from('transactions').select('*').eq('user_id', userId),
-        supabase.from('budgets').select('*').eq('user_id', userId),
-        supabase.from('savings_goals').select('*').eq('user_id', userId),
-        supabase.from('tasks').select('*').eq('user_id', userId),
-        supabase.from('habits').select('*').eq('user_id', userId),
-        supabase.from('timetable_blocks').select('*').eq('user_id', userId),
-        supabase.from('goals').select('*').eq('user_id', userId),
-        supabase.from('projects').select('*').eq('user_id', userId),
-        supabase.from('daily_journals').select('*').eq('user_id', userId)
+      // 1. Overview Sheet
+      const totalIncome = records.transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
+      const totalExpense = records.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
+      const netWorth = totalIncome - totalExpense;
+
+      const overviewData = [
+        ['APEXHUB PERSONAL DEVELOPMENT SYSTEM — COMPLETE DATA BACKUP'],
+        ['Generated At:', new Date().toLocaleString()],
+        ['Account Email:', user?.email || 'N/A'],
+        ['Account Holder:', displayName || 'User'],
+        [],
+        ['EXECUTIVE LIFETIME METRICS'],
+        ['Metric', 'Value'],
+        ['Total Recorded Inflow ($)', totalIncome],
+        ['Total Recorded Outflow ($)', totalExpense],
+        ['Net Lifetime Cash Flow ($)', netWorth],
+        ['Total Transactions Logged', records.transactions.length],
+        ['Active Budgets Configured', records.budgets.length],
+        ['Savings Goals in Vault', records.savings.length],
+        ['Execution Tasks Recorded', records.tasks.length],
+        ['Habits Tracking', records.habits.length],
+        ['Weekly Timetable Blocks', records.timetable.length],
+        ['Strategic Goals', records.goals.length],
+        ['Portfolio Projects', records.projects.length],
+        ['Daily Journal Entries', records.journals.length]
+      ];
+      const wsOverview = XLSX.utils.aoa_to_sheet(overviewData);
+      XLSX.utils.book_append_sheet(wb, wsOverview, 'System Overview');
+
+      // 2. Transactions Sheet
+      const txRows = [
+        ['Date', 'Type', 'Category', 'Amount ($)', 'Description', 'Recurring'],
+        ...records.transactions.map(t => [
+          t.date || '',
+          (t.type || '').toUpperCase(),
+          t.category || 'General',
+          Number(t.amount || 0),
+          t.description || t.notes || '',
+          t.is_recurring ? 'YES' : 'NO'
+        ])
+      ];
+      const wsTx = XLSX.utils.aoa_to_sheet(txRows);
+      XLSX.utils.book_append_sheet(wb, wsTx, 'Transactions');
+
+      // 3. Budgets Sheet
+      const budgetRows = [
+        ['Category', 'Monthly Limit ($)', 'Spent ($)', 'Period', 'Status'],
+        ...records.budgets.map(b => [
+          b.category || 'General',
+          Number(b.amount || b.limit || 0),
+          Number(b.spent || 0),
+          b.period || 'monthly',
+          Number(b.spent || 0) > Number(b.amount || b.limit || 0) ? 'OVER BUDGET' : 'ON TRACK'
+        ])
+      ];
+      const wsBudgets = XLSX.utils.aoa_to_sheet(budgetRows);
+      XLSX.utils.book_append_sheet(wb, wsBudgets, 'Budgets');
+
+      // 4. Savings Vault Sheet
+      const savingsRows = [
+        ['Goal Name', 'Target Amount ($)', 'Current Saved ($)', 'Category', 'Target Date'],
+        ...records.savings.map(s => [
+          s.title || s.name || 'Savings Goal',
+          Number(s.target_amount || 0),
+          Number(s.current_amount || s.saved || 0),
+          s.category || 'Vault',
+          s.target_date || s.deadline || ''
+        ])
+      ];
+      const wsSavings = XLSX.utils.aoa_to_sheet(savingsRows);
+      XLSX.utils.book_append_sheet(wb, wsSavings, 'Savings Vault');
+
+      // 5. Tasks Sheet
+      const taskRows = [
+        ['Task Title', 'Status', 'Priority', 'Due Date', 'Category', 'Timetable Synced'],
+        ...records.tasks.map(t => [
+          t.title || t.text || '',
+          t.status || 'Pending',
+          (t.priority || 'medium').toUpperCase(),
+          t.due_date || t.dueDate || '',
+          t.category || '',
+          t.is_from_timetable ? 'YES' : 'NO'
+        ])
+      ];
+      const wsTasks = XLSX.utils.aoa_to_sheet(taskRows);
+      XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
+
+      // 6. Habits Sheet
+      const habitRows = [
+        ['Habit Name', 'Frequency', 'Active Status', 'Created At'],
+        ...records.habits.map(h => [
+          h.title || h.name || '',
+          (h.frequency || 'daily').toUpperCase(),
+          h.active !== false ? 'ACTIVE' : 'PAUSED',
+          h.created_at || ''
+        ])
+      ];
+      const wsHabits = XLSX.utils.aoa_to_sheet(habitRows);
+      XLSX.utils.book_append_sheet(wb, wsHabits, 'Habits');
+
+      // 7. Timetable Sheet
+      const timetableRows = [
+        ['Day of Week', 'Start Time', 'End Time', 'Activity Title', 'Category'],
+        ...records.timetable.map(b => [
+          b.day_of_week || b.day || '',
+          b.start_time || '',
+          b.end_time || '',
+          b.title || '',
+          b.category || ''
+        ])
+      ];
+      const wsTimetable = XLSX.utils.aoa_to_sheet(timetableRows);
+      XLSX.utils.book_append_sheet(wb, wsTimetable, 'Weekly Timetable');
+
+      // 8. Goals & Milestones Sheet
+      const goalRows = [
+        ['Goal Title', 'Category', 'Status', 'Target Date', 'Milestone Sub-Steps'],
+        ...records.goals.map(g => [
+          g.title || '',
+          (g.category || 'personal').toUpperCase(),
+          (g.status || 'not_started').toUpperCase(),
+          g.target_date || '',
+          (g.milestones || []).map(m => m.title).join(' | ') || 'None'
+        ])
+      ];
+      const wsGoals = XLSX.utils.aoa_to_sheet(goalRows);
+      XLSX.utils.book_append_sheet(wb, wsGoals, 'Strategic Goals');
+
+      // 9. Projects Portfolio Sheet
+      const projectRows = [
+        ['Project Title', 'Status', 'Due Date', 'Description'],
+        ...records.projects.map(p => [
+          p.title || '',
+          (p.status || 'active').toUpperCase(),
+          p.due_date || '',
+          p.description || ''
+        ])
+      ];
+      const wsProjects = XLSX.utils.aoa_to_sheet(projectRows);
+      XLSX.utils.book_append_sheet(wb, wsProjects, 'Projects Portfolio');
+
+      // 10. Daily Journals Sheet
+      const journalRows = [
+        ['Date', 'Reflection / Content', 'Logged At'],
+        ...records.journals.map(j => [
+          j.date || '',
+          j.content || j.notes || '',
+          j.created_at || ''
+        ])
+      ];
+      const wsJournals = XLSX.utils.aoa_to_sheet(journalRows);
+      XLSX.utils.book_append_sheet(wb, wsJournals, 'Daily Reflection Journal');
+
+      XLSX.writeFile(wb, `ApexHub_Complete_Database_${todayStr}.xlsx`);
+      showSnackbar('Comprehensive multi-sheet Excel (.xlsx) workbook exported successfully!');
+    } catch (err) {
+      console.error('Error exporting Excel workbook:', err);
+      showSnackbar(err.message || 'Failed to export Excel file', 'error');
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  // ─── 4B. REAL EXECUTIVE MULTI-PAGE PDF EXPORT (.pdf) ─────────────────────────
+  const handleExportPDF = async () => {
+    setIsExportingPdf(true);
+    try {
+      const records = await fetchFullDatabaseRecords();
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+
+      // ──────────────── HEADER BANNER ────────────────
+      doc.setFillColor(15, 23, 42); // slate-900
+      doc.rect(0, 0, pw, 38, 'F');
+      doc.setFillColor(10, 132, 255); // royal blue accent line
+      doc.rect(0, 38, pw, 3, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ApexHub', 14, 18);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(148, 163, 184);
+      doc.text('Complete Personal Development System & Database Audit', 14, 25);
+      doc.text(`Account Holder: ${displayName || 'User'} | ${user?.email || ''}`, 14, 32);
+
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Export Date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`, pw - 14, 18, { align: 'right' });
+      doc.setTextColor(148, 163, 184);
+      doc.text('Classification: Confidential Personal Ledger', pw - 14, 26, { align: 'right' });
+
+      let y = 48;
+
+      // ──────────────── KPI BOXES ────────────────
+      const totalIncome = records.transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
+      const totalExpense = records.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
+      const netCash = totalIncome - totalExpense;
+
+      const boxW = (pw - 42) / 3;
+      const kpis = [
+        { label: 'NET CASH FLOW', val: `$${netCash.toLocaleString()}`, sub: `${records.transactions.length} Transactions Logged`, bg: [224, 242, 254], fg: [10, 132, 255] },
+        { label: 'EXECUTION VELOCITY', val: `${records.tasks.length} Tasks`, sub: `${records.habits.length} Habits Tracked`, bg: [237, 233, 254], fg: [94, 92, 230] },
+        { label: 'STRATEGIC PORTFOLIO', val: `${records.goals.length} Goals`, sub: `${records.projects.length} Active Projects`, bg: [219, 252, 234], fg: [48, 209, 88] }
+      ];
+
+      kpis.forEach((k, idx) => {
+        const bx = 14 + idx * (boxW + 7);
+        doc.setFillColor(...k.bg);
+        doc.roundedRect(bx, y, boxW, 24, 3, 3, 'F');
+        doc.setTextColor(...k.fg);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(k.label, bx + boxW / 2, y + 7, { align: 'center' });
+        doc.setFontSize(13);
+        doc.text(k.val, bx + boxW / 2, y + 14, { align: 'center' });
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text(k.sub, bx + boxW / 2, y + 20, { align: 'center' });
+      });
+
+      y += 32;
+
+      // ──────────────── TABLE 1: FINANCIAL TRANSACTIONS ────────────────
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text('1. Cash In & Expense Ledger', 14, y);
+      y += 4;
+
+      const txTableBody = records.transactions.slice(0, 25).map(t => [
+        t.date || '-',
+        (t.type || '').toUpperCase(),
+        t.category || 'General',
+        `$${Number(t.amount || 0).toLocaleString()}`,
+        t.description || t.notes || '-'
       ]);
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Date', 'Type', 'Category', 'Amount', 'Description']],
+        body: txTableBody.length > 0 ? txTableBody : [['-', 'NO TRANSACTIONS', '-', '-', '-']],
+        theme: 'striped',
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 }
+      });
+
+      // ──────────────── TABLE 2: EXECUTION TASKS ────────────────
+      doc.addPage();
+      y = 20;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text('2. Prioritized Execution Tasks', 14, y);
+      y += 4;
+
+      const taskTableBody = records.tasks.slice(0, 30).map(t => [
+        t.title || t.text || '-',
+        (t.priority || 'medium').toUpperCase(),
+        t.status || 'Pending',
+        t.due_date || t.dueDate || '-',
+        t.category || 'General'
+      ]);
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Task Title', 'Priority', 'Status', 'Due Date', 'Category']],
+        body: taskTableBody.length > 0 ? taskTableBody : [['-', 'NO TASKS LOGGED', '-', '-', '-']],
+        theme: 'striped',
+        headStyles: { fillColor: [94, 92, 230], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 }
+      });
+
+      // ──────────────── TABLE 3: STRATEGIC GOALS & PROJECTS ────────────────
+      y = doc.lastAutoTable.finalY + 14;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text('3. Strategic Goals & Project Milestones', 14, y);
+      y += 4;
+
+      const goalTableBody = records.goals.slice(0, 20).map(g => [
+        g.title || '-',
+        (g.category || 'personal').toUpperCase(),
+        (g.status || 'not_started').toUpperCase(),
+        g.target_date || '-',
+        (g.milestones || []).map(m => m.title).join(', ') || 'None'
+      ]);
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Goal / Project', 'Category', 'Status', 'Target Date', 'Milestone Checkpoints']],
+        body: goalTableBody.length > 0 ? goalTableBody : [['-', 'NO GOALS LOGGED', '-', '-', '-']],
+        theme: 'striped',
+        headStyles: { fillColor: [48, 209, 88], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 }
+      });
+
+      // Footer Page Numbering on all pages
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184);
+        doc.text(`ApexHub Executive Audit · Generated for ${displayName || 'User'}`, 14, ph - 8);
+        doc.text(`Page ${i} of ${totalPages}`, pw - 14, ph - 8, { align: 'right' });
+      }
+
+      doc.save(`ApexHub_Executive_Audit_${todayStr}.pdf`);
+      showSnackbar('Executive multi-page PDF audit report exported successfully!');
+    } catch (err) {
+      console.error('Error exporting PDF document:', err);
+      showSnackbar(err.message || 'Failed to export PDF file', 'error');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  // ─── 4C. REAL FULL JSON DATABASE BACKUP (.json) ──────────────────────────────
+  const handleExportJSON = async () => {
+    setIsExportingJson(true);
+    try {
+      const records = await fetchFullDatabaseRecords();
+      const todayStr = new Date().toISOString().split('T')[0];
 
       const backupPayload = {
         app: 'ApexHub Personal Development System',
         version: '1.0.0',
         exportedAt: new Date().toISOString(),
         user: {
-          id: userId,
+          id: user?.id,
           email: user?.email,
           name: displayName
         },
-        data: {
-          transactions: transactions || [],
-          budgets: budgets || [],
-          savings_goals: savings || [],
-          tasks: tasks || [],
-          habits: habits || [],
-          timetable_blocks: timetable || [],
-          goals: goals || [],
-          projects: projects || [],
-          daily_journals: journals || []
-        }
+        data: records
       };
 
       const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `ApexHub_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `ApexHub_Raw_Database_Backup_${todayStr}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      showSnackbar('Complete JSON backup downloaded successfully!');
+      showSnackbar('Complete Raw JSON backup file downloaded successfully!');
     } catch (err) {
-      console.error('Error exporting database data:', err);
-      showSnackbar(err.message || 'Failed to export backup data', 'error');
+      console.error('Error exporting JSON backup:', err);
+      showSnackbar(err.message || 'Failed to export JSON backup data', 'error');
     } finally {
-      setIsExporting(false);
+      setIsExportingJson(false);
     }
   };
 
@@ -261,7 +615,7 @@ export default function Settings() {
       {/* HEADER */}
       <div className="hero-section hero-3d">
         <h2 className="hero-greeting">Settings & Vault Preferences</h2>
-        <p className="hero-subtitle">Manage authenticated identity, system localization, security encryption, and data backups</p>
+        <p className="hero-subtitle">Manage authenticated identity, system localization, security encryption, and comprehensive data backups</p>
       </div>
 
       <div className="settings-list">
@@ -558,7 +912,7 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* ======================== 4. DATA MANAGEMENT & BACKUP ======================== */}
+        {/* ======================== 4. COMPREHENSIVE DATA EXPORT (EXCEL, PDF, JSON) ======================== */}
         <div className={`settings-card glass-3d ${expandedSection === 'data' ? 'expanded' : ''}`}>
           <div className="settings-card-header" onClick={() => toggleSection('data')}>
             <div className="settings-card-header-left">
@@ -566,8 +920,8 @@ export default function Settings() {
                 <Database size={22} />
               </div>
               <div>
-                <h3 className="settings-title">Data Management & Full Backup</h3>
-                <p className="settings-desc">Export full database records and clear local caches</p>
+                <h3 className="settings-title">Data Management & Complete Exports</h3>
+                <p className="settings-desc">Export comprehensive database records to Excel, PDF, or JSON</p>
               </div>
             </div>
             <span className={`chevron ${expandedSection === 'data' ? 'rotated' : ''}`}>{chevronSvg}</span>
@@ -575,35 +929,113 @@ export default function Settings() {
 
           <div className={`settings-content ${expandedSection === 'data' ? 'content-visible' : ''}`}>
             <div className="content-section">
-              <h4 className="section-label">Database Export & Portability</h4>
+              <h4 className="section-label">Comprehensive Multi-Format Data Exports</h4>
               
-              <div className="data-action-card">
-                <div className="dac-info">
-                  <div className="dac-title-row">
-                    <Download size={20} className="text-blue" />
-                    <span className="dac-title">Download Full JSON Backup</span>
+              <div className="export-grid">
+                {/* 1. Excel Export */}
+                <div className="export-format-card">
+                  <div className="efc-header">
+                    <div className="efc-icon-frame green">
+                      <FileSpreadsheet size={24} color="#30D158" />
+                    </div>
+                    <div className="efc-title-box">
+                      <div className="efc-title-row">
+                        <span className="efc-title">Complete Excel Workbook</span>
+                        <span className="efc-badge green">.XLSX Multi-Sheet</span>
+                      </div>
+                      <p className="efc-desc">
+                        Full multi-tab spreadsheet containing 10 worksheets: Transactions, Budgets, Savings Vault, Tasks, Habits, Timetable, Goals, Projects, and Journals.
+                      </p>
+                    </div>
                   </div>
-                  <p className="dac-desc">
-                    Generates a complete JSON backup of all your transactions, budgets, savings goals, tasks, habits, timetable blocks, goals, and journals directly from Supabase.
-                  </p>
+                  <button 
+                    className="btn-export-format btn-excel" 
+                    onClick={handleExportExcel}
+                    disabled={isExportingExcel}
+                  >
+                    {isExportingExcel ? (
+                      <>
+                        <RefreshCw size={16} className="spin" />
+                        <span>Building Excel Workbook...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        <span>Download Full Excel (.xlsx)</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button 
-                  className="btn-export" 
-                  onClick={handleExportAllData}
-                  disabled={isExporting}
-                >
-                  {isExporting ? (
-                    <>
-                      <RefreshCw size={16} className="spin" />
-                      <span>Generating Backup...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download size={16} />
-                      <span>Export Everything (.json)</span>
-                    </>
-                  )}
-                </button>
+
+                {/* 2. PDF Export */}
+                <div className="export-format-card">
+                  <div className="efc-header">
+                    <div className="efc-icon-frame red">
+                      <FileText size={24} color="#FF453A" />
+                    </div>
+                    <div className="efc-title-box">
+                      <div className="efc-title-row">
+                        <span className="efc-title">Executive Audit PDF Report</span>
+                        <span className="efc-badge red">.PDF Multi-Page</span>
+                      </div>
+                      <p className="efc-desc">
+                        Clean, formatted executive document with financial scorecards, task priority tables, and milestone roadmap progress ready for printing or archiving.
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    className="btn-export-format btn-pdf" 
+                    onClick={handleExportPDF}
+                    disabled={isExportingPdf}
+                  >
+                    {isExportingPdf ? (
+                      <>
+                        <RefreshCw size={16} className="spin" />
+                        <span>Generating PDF Document...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        <span>Download Executive PDF (.pdf)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* 3. JSON Export */}
+                <div className="export-format-card">
+                  <div className="efc-header">
+                    <div className="efc-icon-frame blue">
+                      <Code2 size={24} color="#0A84FF" />
+                    </div>
+                    <div className="efc-title-box">
+                      <div className="efc-title-row">
+                        <span className="efc-title">Raw Database JSON Backup</span>
+                        <span className="efc-badge blue">.JSON Data File</span>
+                      </div>
+                      <p className="efc-desc">
+                        Complete raw cryptographic database backup containing all user tables for zero vendor lock-in, data migration, and offline preservation.
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    className="btn-export-format btn-json" 
+                    onClick={handleExportJSON}
+                    disabled={isExportingJson}
+                  >
+                    {isExportingJson ? (
+                      <>
+                        <RefreshCw size={16} className="spin" />
+                        <span>Packing JSON Archive...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        <span>Download Raw JSON (.json)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="content-divider" />
@@ -786,7 +1218,7 @@ export default function Settings() {
         }
 
         .settings-content.content-visible {
-          max-height: 1400px;
+          max-height: 1800px;
           opacity: 1;
           padding: 0 1.8rem 1.8rem 1.8rem;
         }
@@ -1098,6 +1530,151 @@ export default function Settings() {
           transform: translateY(-1px);
         }
 
+        /* ---- Comprehensive Export Grid ---- */
+        .export-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .export-format-card {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding: 20px 22px;
+          border-radius: 16px;
+          background: var(--surface-low);
+          border: 1px solid var(--border);
+          transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+        .export-format-card:hover {
+          border-color: var(--accent);
+          transform: translateY(-2px);
+        }
+
+        .efc-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+        }
+        .efc-icon-frame {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        }
+        .efc-icon-frame.green {
+          background: rgba(48, 209, 88, 0.15);
+          border: 1px solid rgba(48, 209, 88, 0.3);
+        }
+        .efc-icon-frame.red {
+          background: rgba(255, 69, 58, 0.15);
+          border: 1px solid rgba(255, 69, 58, 0.3);
+        }
+        .efc-icon-frame.blue {
+          background: rgba(10, 132, 255, 0.15);
+          border: 1px solid rgba(10, 132, 255, 0.3);
+        }
+
+        .efc-title-box {
+          flex: 1;
+        }
+        .efc-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 4px;
+          flex-wrap: wrap;
+        }
+        .efc-title {
+          font-size: 1.02rem;
+          font-weight: 800;
+          color: var(--text-primary);
+        }
+        .efc-badge {
+          font-size: 0.72rem;
+          font-weight: 800;
+          padding: 3px 9px;
+          border-radius: 100px;
+          border: 1px solid;
+          letter-spacing: 0.4px;
+          text-transform: uppercase;
+        }
+        .efc-badge.green {
+          background: rgba(48, 209, 88, 0.12);
+          color: #30D158;
+          border-color: rgba(48, 209, 88, 0.3);
+        }
+        .efc-badge.red {
+          background: rgba(255, 69, 58, 0.12);
+          color: #FF453A;
+          border-color: rgba(255, 69, 58, 0.3);
+        }
+        .efc-badge.blue {
+          background: rgba(10, 132, 255, 0.12);
+          color: #0A84FF;
+          border-color: rgba(10, 132, 255, 0.3);
+        }
+
+        .efc-desc {
+          font-size: 0.83rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin: 0;
+        }
+
+        .btn-export-format {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 11px 22px;
+          border-radius: 12px;
+          border: none;
+          color: white;
+          font-size: 0.9rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          width: fit-content;
+        }
+        .btn-export-format:hover:not(:disabled) {
+          transform: translateY(-2px);
+        }
+        .btn-export-format:disabled {
+          opacity: 0.7;
+          cursor: wait;
+        }
+
+        .btn-excel {
+          background: linear-gradient(135deg, #30D158, #009944);
+          box-shadow: 0 4px 14px rgba(48, 209, 88, 0.35);
+        }
+        .btn-excel:hover:not(:disabled) {
+          box-shadow: 0 8px 22px rgba(48, 209, 88, 0.45);
+        }
+
+        .btn-pdf {
+          background: linear-gradient(135deg, #FF453A, #C41C40);
+          box-shadow: 0 4px 14px rgba(255, 69, 58, 0.35);
+        }
+        .btn-pdf:hover:not(:disabled) {
+          box-shadow: 0 8px 22px rgba(255, 69, 58, 0.45);
+        }
+
+        .btn-json {
+          background: linear-gradient(135deg, #0A84FF, #0055D4);
+          box-shadow: 0 4px 14px rgba(10, 132, 255, 0.35);
+        }
+        .btn-json:hover:not(:disabled) {
+          box-shadow: 0 8px 22px rgba(10, 132, 255, 0.45);
+        }
+
         /* ---- Data Action Cards ---- */
         .data-action-card {
           display: flex;
@@ -1129,30 +1706,6 @@ export default function Settings() {
           color: var(--text-secondary);
           line-height: 1.45;
           margin: 0;
-        }
-        .btn-export {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 20px;
-          border-radius: 10px;
-          border: none;
-          background: linear-gradient(135deg, #0A84FF, #0055D4);
-          color: white;
-          font-size: 0.88rem;
-          font-weight: 800;
-          cursor: pointer;
-          white-space: nowrap;
-          box-shadow: 0 4px 14px rgba(10, 132, 255, 0.35);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .btn-export:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(10, 132, 255, 0.45);
-        }
-        .btn-export:disabled {
-          opacity: 0.7;
-          cursor: wait;
         }
         .btn-clear-cache {
           padding: 9px 18px;
@@ -1268,7 +1821,7 @@ export default function Settings() {
             flex-direction: column;
             align-items: flex-start;
           }
-          .btn-export, .btn-clear-cache {
+          .btn-export-format, .btn-clear-cache {
             width: 100%;
             justify-content: center;
           }

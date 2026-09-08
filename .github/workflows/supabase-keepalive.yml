@@ -23,13 +23,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping the REST endpoint
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || vars.SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/categories?select=id&limit=1")
-          echo "Supabase responded: $code"
-          if [ "$code" != "200" ]; then
-            echo "::error::Unexpected status $code — the project may be paused or the secrets may be wrong."
+          # Strip surrounding quotes and whitespace if present
+          URL=$(echo "$SUPABASE_URL" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\''']//' -e 's/["'\''']$//' -e 's/\/$//')
+          KEY=$(echo "$SUPABASE_ANON_KEY" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\''']//' -e 's/["'\''']$//')
+
+          if [ -z "$URL" ]; then
+            echo "::error::SUPABASE_URL is empty! Please add SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) to GitHub Settings -> Secrets and variables -> Actions."
             exit 1
           fi
+
+          if [ -z "$KEY" ]; then
+            echo "::error::SUPABASE_ANON_KEY is empty! Please add SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) to GitHub Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          echo "Pinging: ${URL}/rest/v1/categories?select=id&limit=1"
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            "${URL}/rest/v1/categories?select=id&limit=1")
+          echo "Supabase responded with HTTP code: $code"
+          if [ "$code" != "200" ] && [ "$code" != "204" ] && [ "$code" != "206" ]; then
+            echo "::error::Unexpected status $code — the project may be paused or the secret key is invalid."
+            exit 1
+          fi
+          echo "Keep-alive ping successful!"

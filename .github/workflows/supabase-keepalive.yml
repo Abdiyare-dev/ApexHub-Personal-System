@@ -22,33 +22,46 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping the REST endpoint
+      - name: Ping the Supabase project
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL || vars.SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          # Strip surrounding quotes and whitespace if present
+          # Clean whitespace, quotation marks, and trailing slashes
           URL=$(echo "$SUPABASE_URL" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\''']//' -e 's/["'\''']$//' -e 's/\/$//')
           KEY=$(echo "$SUPABASE_ANON_KEY" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\''']//' -e 's/["'\''']$//')
 
+          # Auto-prefix https:// if omitted
+          if [ -n "$URL" ] && [[ ! "$URL" =~ ^https?:// ]]; then
+            URL="https://$URL"
+          fi
+
           if [ -z "$URL" ]; then
-            echo "::error::SUPABASE_URL is empty! Please add SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) to GitHub Settings -> Secrets and variables -> Actions."
+            echo "::error::SUPABASE_URL is missing! Please ensure you added SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) under GitHub Settings -> Secrets and variables -> Actions (Repository secrets, NOT Environment secrets)."
             exit 1
           fi
 
-          if [ -z "$KEY" ]; then
-            echo "::error::SUPABASE_ANON_KEY is empty! Please add SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) to GitHub Settings -> Secrets and variables -> Actions."
-            exit 1
+          echo "Pinging Supabase health endpoint at $URL ..."
+
+          # 1. First attempt: Supabase Auth Health Endpoint (Lightweight & Always available on active instances)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${URL}/auth/v1/health")
+          echo "Auth health check response code: $HTTP_CODE"
+
+          # 2. Second attempt: PostgREST root API (if auth health isn't 200)
+          if [ "$HTTP_CODE" != "200" ]; then
+            if [ -n "$KEY" ]; then
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
+                -H "apikey: $KEY" \
+                -H "Authorization: Bearer $KEY" \
+                "${URL}/rest/v1/")
+              echo "REST root response code: $HTTP_CODE"
+            fi
           fi
 
-          echo "Pinging: ${URL}/rest/v1/categories?select=id&limit=1"
-          code=$(curl -s -o /dev/null -w '%{http_code}' \
-            -H "apikey: $KEY" \
-            -H "Authorization: Bearer $KEY" \
-            "${URL}/rest/v1/categories?select=id&limit=1")
-          echo "Supabase responded with HTTP code: $code"
-          if [ "$code" != "200" ] && [ "$code" != "204" ] && [ "$code" != "206" ]; then
-            echo "::error::Unexpected status $code — the project may be paused or the secret key is invalid."
+          # Accept 200, 204, or 300-level redirects
+          if [[ "$HTTP_CODE" =~ ^(200|204|206|301|302|307|308)$ ]]; then
+            echo "✅ Supabase project is active and ping succeeded! (HTTP $HTTP_CODE)"
+          else
+            echo "::error::Ping failed with status code $HTTP_CODE. The project might be paused or the URL is incorrect."
             exit 1
           fi
-          echo "Keep-alive ping successful!"

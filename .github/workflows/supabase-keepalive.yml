@@ -24,22 +24,31 @@ jobs:
     steps:
       - name: Ping the Supabase project
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          RAW_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          RAW_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${SUPABASE_URL}/auth/v1/health")
-          echo "Supabase Auth Health response: $CODE"
-          if [ "$CODE" = "200" ]; then
-            echo "Supabase keep-alive ping successful!"
-            exit 0
-          fi
+          # Strip any accidental 'VARIABLE_NAME=', quotes, spaces, or trailing slashes
+          URL=$(echo "$RAW_URL" | sed -e 's/^.*=//' -e 's/["'\'']//g' -e 's/[[:space:]]//g' -e 's/\/$//')
+          KEY=$(echo "$RAW_KEY" | sed -e 's/^.*=//' -e 's/["'\'']//g' -e 's/[[:space:]]//g')
 
-          CODE_REST=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -H "apikey: ${SUPABASE_ANON_KEY}" -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" "${SUPABASE_URL}/rest/v1/")
+          # 1. Ping Auth health check with apikey header
+          CODE_AUTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -H "apikey: $KEY" "${URL}/auth/v1/health")
+          echo "Supabase Auth Health response: $CODE_AUTH"
+
+          # 2. Ping PostgREST tasks endpoint with apikey & auth header
+          CODE_REST=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -H "apikey: $KEY" -H "Authorization: Bearer $KEY" "${URL}/rest/v1/tasks?select=id&limit=1")
           echo "Supabase REST response: $CODE_REST"
-          if [ "$CODE_REST" = "200" ]; then
-            echo "Supabase keep-alive ping successful via REST!"
+
+          if [ "$CODE_AUTH" = "200" ] || [ "$CODE_REST" = "200" ]; then
+            echo "✅ Supabase keep-alive ping successful (HTTP 200)!"
             exit 0
           fi
 
-          echo "Error: Ping returned status $CODE (Auth) / $CODE_REST (REST)"
+          # If Supabase responds with 401/403/404/204/206, the instance is alive and awake
+          if [[ "$CODE_AUTH" =~ ^(200|204|401|403)$ ]] || [[ "$CODE_REST" =~ ^(200|204|206|401|403|404)$ ]]; then
+            echo "✅ Supabase project is online and received ping traffic (Status: Auth $CODE_AUTH / REST $CODE_REST)!"
+            exit 0
+          fi
+
+          echo "::error::Ping failed! Unable to reach Supabase project (Auth: $CODE_AUTH, REST: $CODE_REST)."
           exit 1
